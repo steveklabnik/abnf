@@ -48,9 +48,8 @@ class ABNF
 
   def ABNF.regexp_object(desc, name=nil)
     grammar = ABNF.parse(desc)
-    first = grammar.names.first
-    raise StandardError.new("no rule defined") if first.nil?
-    name ||= first
+    raise StandardError.new("no rule defined") if grammar.names.empty?
+    name ||= grammar.names.first
     grammar.regexp(name)
   end
 
