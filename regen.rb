@@ -482,9 +482,9 @@ module ReGen
 
       case @es
       when ES::Empty
-        '[^\0-\377]'
+        '(?!)'
       when ES::Full
-        '[\0-\377]'
+        '[\s\S]'
       when ES::NL
         '\n'
       when ES::NonNL
