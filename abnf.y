@@ -1,19 +1,19 @@
 # RFC 2234
-class Parser
+class ABNFParser
 rule
-  rulelist	:		{ result = ABNF.new(@parent) }
-          	| rulelist rule	{ result.add_rule(*val[1]) }
+  rulelist	:		{ result = Grammar.new }
+          	| rulelist rule	{ result[val[1][0]] = val[1][1].simplify }
 
-  rule	: defname assign alternation	{ result = [val[0], val[2]] }
+  rule	: defname assign alt	{ result = [val[0], val[2]] }
 
-  alternation	: concatenation
-  		| alternation altop concatenation	{ result = Alternation.create(val[0], val[2]) }
+  alt	: con
+	| alt altop con	{ result = val[0] + val[2] }
 
-  concatenation	: repetition
-  		| concatenation repetition	{ result = Concatenation.create(val[0], val[1]) }
+  con	: rep
+	| con rep	{ result = val[0] * val[1] }
 
-  repetition	: element
-		| repeat element	{ result = Repetition.new(val[1], *val[0]) }
+  rep	: element
+	| repeat element	{ result = val[1].rep(*val[0]) }
 
   repeat	: repop		{ result = [0, nil] }
 		| repop int	{ result = [0, val[1]] }
@@ -21,285 +21,19 @@ rule
 		| int repop	{ result = [val[0], nil] }
 		| int repop int	{ result = [val[0], val[2]] }
 
-  element	: name	{ result = RuleName.new(val[0]) }
-  		| lparen alternation rparen	{ result = val[1] }
-		| lbracket alternation rbracket	{ result = Repetition.new(val[1], 0, 1) }
+  element	: name	{ result = Grammar::RuleRef.new(val[0]) }
+  		| lparen alt rparen	{ result = val[1] }
+		| lbracket alt rbracket	{ result = val[1].rep(0, 1) }
 		| val
 end
 
 ---- header
 
-require 'regen'
+require 'grammar'
 
-class ABNF
-  def ABNF.regexp(desc, name=nil)
-    Parser.new.parse(desc).to_regexp(name)
-  end
-
-  def initialize(defs=CoreRules)
-    @firstname = nil
-    @rule = {}
-    defs.each_rule {|name, elements| @rule[name] = elements} if defs
-  end
-
-  def add_rule(name, elements)
-    @firstname = name unless @firstname
-    if @rule.include? name
-      @rule[name] = Alternation.create(@rule[name], elements)
-    else
-      @rule[name] = elements
-    end
-  end
-
-  def each_rule
-    @rule.each {|v|
-      yield v
-    }
-  end
-
-  def to_regexp(name=nil)
-    name ||= @firstname
-    order_cell = [0]
-    order_hash = {}
-    node_stack = []
-    components = []
-    order_hash.default = -1
-
-    collect_defs(name, order_cell, order_hash, node_stack, components)
-
-    rule = []
-    components.each {|ns|
-      # This condition is too restrictive, I think.
-      # A contribution to relax it is welcome.
-      if ns.length != 1
-	raise ABNF::Error.new("cannot convert mutually recusive rules to regexp: #{ns.join(', ')}")
-      end
-
-      n = ns[0]
-      e = @rule[n]
-
-      # Convert a recursive rule to non-recursive rule if possible.
-      # This conversion is *not* perfect.
-      # It may fail even if possible.
-      # More work (survey) is needed.
-      if Alternation === e
-	left = []
-	middle = []
-	right = []
-        e.es.each {|branch|
-	  if Concatenation === branch
-	    if branch.es.empty?
-	      middle << branch
-	    else
-	      if RuleName === branch.es.first && branch.es.first.name == n
-	        right << Concatenation.create(*branch.es[1..-1])
-	      elsif RuleName === branch.es.last && branch.es.last.name == n
-	        left << Concatenation.create(*branch.es[0...-1])
-	      else
-	        middle << branch
-	      end
-	    end
-	  else
-	    middle << branch
-	  end
-	}
-	es = []
-	es << Repetition.create(Alternation.create(*left)) unless left.empty?
-	es << Alternation.create(*middle)
-	es << Repetition.create(Alternation.create(*right)) unless right.empty?
-	e = Concatenation.create(*es)
-      end
-
-      if e.refnames.include? n
-	raise ABNF::Error.new("too complex to convert to regexp: #{n}")
-      end
-
-      rule << [n, e]
-    }
-
-    env = {}
-    rule.each {|n, e|
-      env[n] = e.to_regexp(env)
-    }
-
-    env[name].to_s
-  end
-
-  class Error < StandardError
-  end
-
-  def collect_defs(name, order_cell, order_hash, node_stack, components)
-    order = (order_cell[0] += 1)
-    reachable_minimum_order = order
-    order_hash[name] = order
-    stack_length = node_stack.length
-    node_stack << name
-
-    elements = @rule[name]
-    raise ABNF::Error.new("no rule for #{name}") unless elements
-    elements.refnames.each {|nextname|
-      nextorder = order_hash[nextname]
-      if nextorder != -1
-        if nextorder < reachable_minimum_order
-          reachable_minimum_order = nextorder
-        end
-      else
-        sub_minimum_order = collect_defs(nextname, order_cell, order_hash, node_stack, components)
-        if sub_minimum_order < reachable_minimum_order
-          reachable_minimum_order = sub_minimum_order
-        end
-      end
-    }
-
-    if order == reachable_minimum_order
-      scc = node_stack[stack_length .. -1]
-      node_stack[stack_length .. -1] = []
-      components << scc
-      scc.each {|n|
-        order_hash[n] = @rule.size
-      }
-    end
-    return reachable_minimum_order
-  end
-
-  class Alternation
-    def Alternation.create(*es)
-      es2 = []
-      until es.empty?
-        if Alternation === es.last
-	  es[-1, 1] = es.last.es
-	else
-	  es2 << es.pop
-	end
-      end
-      es2.reverse!
-      if es2.length == 1
-        es2[0]
-      else
-	Alternation.new(*es2)
-      end
-    end
-
-    def initialize(*es)
-      @es = es
-    end
-    attr_reader :es
-
-    def refnames
-      ns = []
-      @es.each {|e| ns |= e.refnames}
-      ns
-    end
-
-    def to_regexp(env)
-      r = ReGen::Alt.new
-      @es.each {|e| r += e.to_regexp(env)}
-      r
-    end
-  end
-
-  class Concatenation
-    def Concatenation.create(*es)
-      es2 = []
-      until es.empty?
-        if Concatenation === es.last
-	  es[-1, 1] = es.last.es
-	elsif Alternation === es.last && es.last.es.length == 0
-	  es.last
-	else
-	  es2 << es.pop
-	end
-      end
-      es2.reverse!
-      if es2.length == 1
-        es2[0]
-      else
-	Concatenation.new(*es2)
-      end
-    end
-
-    def initialize(*es)
-      @es = es
-    end
-    attr_reader :es
-
-    def refnames
-      ns = []
-      @es.each {|e| ns |= e.refnames}
-      ns
-    end
-
-    def to_regexp(env)
-      r = ReGen::Con.new
-      @es.each {|e| r *= e.to_regexp(env)}
-      r
-    end
-  end
-
-  class Repetition
-    def Repetition.create(e, m=0, n=nil)
-      if Concatenation === e && e.es.length == 0
-        e
-      elsif Alternation === e && e.es.length == 0
-        Concatenation.new
-      else
-	Repetition.new(e, m, n)
-      end
-    end
-
-    def initialize(e, m=0, n=nil)
-      @e = e
-      @m = m
-      @n = n
-    end
-
-    def refnames
-      @e.refnames
-    end
-
-    def to_regexp(env)
-      @e.to_regexp(env).closure(@m, @n)
-    end
-  end
-
-  class RuleName
-    def initialize(name)
-      @name = name
-    end
-    attr_reader :name
-
-    def refnames
-      [@name]
-    end
-
-    def to_regexp(env)
-      env[@name]
-    end
-  end
-
-  class NumRange
-    def initialize(m, n=m)
-      @m = m
-      @n = n
-    end
-
-    def refnames
-      []
-    end
-
-    def to_regexp(env)
-      ReGen[@m..@n]
-    end
-  end
-
-  class ProseVal
-    def initialize(prose)
-      @prose = prose
-    end
-
-    def refnames
-      []
-    end
+module ABNF
+  def ABNF.regexp(desc, name) # xxx make name optional
+    ABNFParser.new.parse(desc).to_regexp(name)
   end
 
 ---- inner
@@ -337,7 +71,7 @@ class ABNF
 	when /\A;/
 	  t = line
 	when /\A[A-Za-z][A-Za-z0-9\-_]*/ # _ is not permitted by ABNF
-	  yield :name, (t = $&)
+	  yield :name, (t = $&).intern
 	when /\A=\/?/
 	  yield :assign, (t = $&) # | is not permitted by ABNF
 	when /\A[\/|]/
@@ -360,40 +94,46 @@ class ABNF
 	    case b
 	    when ?A..?Z
 	      b2 = b - ?A + ?a
-	      es << Alternation.create(NumRange.new(b), NumRange.new(b2))
+	      es << Grammar::Term.new(NatSet.create(b, b2))
 	    when ?a..?z
 	      b2 = b - ?a + ?A
-	      es << Alternation.create(NumRange.new(b), NumRange.new(b2))
+	      es << Grammar::Term.new(NatSet.create(b, b2))
 	    else
-	      es << NumRange.new(b)
+	      es << Grammar::Term.new(NatSet.create(b))
 	    end
 	  }
-	  yield :val, Concatenation.create(*es)
+	  yield :val, Grammar::Con.new(*es)
 	when /\A%b([01]+)-([01]+)/
 	  t = $&
-	  yield :val, NumRange.new(binval($1), binval($2))
+	  yield :val, Grammar::Term.new(NatSet.create(binval($1)..binval($2)))
 	when /\A%b[01]+(?:\.[01]+)*/
 	  es = []
-	  (t = $&).scan(/[0-1]+/) {|v| es << NumRange.new(binval(v))}
-	  yield :val, Concatenation.create(*es)
+	  (t = $&).scan(/[0-1]+/) {|v|
+	    es << Grammar::Term.new(NatSet.create(binval(v)))
+	  }
+	  yield :val, Grammar::Con.new(*es)
 	when /\A%d([0-9]+)-([0-9]+)/
 	  t = $&
-	  yield :val, NumRange.new($1.to_i, $2.to_i)
+	  yield :val, Grammar::Term.new(NatSet.create($1.to_i..$2.to_i))
 	when /\A%d[0-9]+(?:\.[0-9]+)*/
 	  es = []
-	  (t = $&).scan(/[0-9]+/) {|v| es << NumRange.new(v.to_i)}
-	  yield :val, Concatenation.create(*es)
+	  (t = $&).scan(/[0-9]+/) {|v|
+	    es << Grammar::Term.new(NatSet.create(v.to_i))
+	  }
+	  yield :val, Grammar::Con.new(*es)
 	when /\A%x([0-9A-Fa-f]+)-([0-9A-Fa-f]+)/
 	  t = $&
-	  yield :val, NumRange.new($1.hex, $2.hex)
+	  yield :val, Grammar::Term.new(NatSet.create($1.hex..$2.hex))
 	when /\A%x[0-9A-Fa-f]+(?:\.[0-9A-Fa-f]+)*/
 	  es = []
-	  (t = $&).scan(/[0-9A-Fa-f]+/) {|v| es << NumRange.new(v.hex)}
-	  yield :val, Concatenation.create(*es)
+	  (t = $&).scan(/[0-9A-Fa-f]+/) {|v|
+	    es << Grammar::Term.new(NatSet.create(v.hex))
+	  }
+	  yield :val, Grammar::Con.new(*es)
 	when /\A<([\x20-\x3D\x3F-\x7E]*)>/
-	  yield :val, (t = $&)
+	  raise ScanError.new "prose-val is not supported: #{$&}"
 	else
-	  raise ScanError.new(line)
+	  raise ScanError.new line
 	end
 	line[0, t.length] = ''
       end
@@ -402,7 +142,7 @@ class ABNF
   end
 
   def binval(bin)
-    eval "0b#{bin}" # shouldn't use eval.
+    Integer "0b#{bin}"
   end
 
   class ScanError < StandardError
@@ -410,7 +150,7 @@ class ABNF
 
 ---- footer
 
-  CoreRules = Parser.new(nil).parse(<<'End') # taken from RFC 2234
+  CoreRules = ABNFParser.new(nil).parse(<<'End') # taken from RFC 2234
         ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
 
         BIT            =  "0" / "1"
