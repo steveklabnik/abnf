@@ -4,7 +4,7 @@ Regexp (Regular Expression) written in Ruby.
 It parses a description according to ABNF defined by RFC2234 and some variants.
 Then the parsed grammar is transformed to recursion free.
 Although the transformation is impossible in general, 
-the library transform left and right recursion.
+the library transform left- and right-recursion.
 The recursion free grammar can be printed as Regexp literal
 which is suitable in Ruby script.
 The literal is pretty readable because parentheses are minimized and
