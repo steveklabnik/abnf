@@ -1,9 +1,9 @@
 # RFC 2234
 class ABNFParser
 rule
-  rulelist	:		{ result = Grammar.new; result.import(@parent) }
+  rulelist	:
           	| rulelist rule	{ @name ||= val[1][0]
-		                  result[val[1][0]] = val[1][1].simplify }
+		                  @grammar[val[1][0]] = val[1][1].simplify }
 
   rule	: defname assign alt	{ result = [val[0], val[2]] }
 
@@ -34,15 +34,19 @@ require 'grammar'
 
 module ABNF
   def ABNF.regexp(desc, name=nil)
-    parser = ABNFParser.new
-    parser.parse(desc).regexp(name || parser.name)
+    grammar = Grammar.new
+    grammar.import(CoreRules)
+    parser = ABNFParser.new(grammar)
+    parser.parse(desc)
+    name ||= parser.name
+    grammar.regexp(name)
   end
 
 ---- inner
 
-  def initialize(parent=CoreRules)
-    @parent = parent || Grammar.new
+  def initialize(grammar)
     @name = nil
+    @grammar = grammar
   end
   attr_reader :name
 
@@ -154,7 +158,8 @@ module ABNF
 
 ---- footer
 
-  CoreRules = ABNFParser.new(nil).parse(<<'End') # taken from RFC 2234
+  CoreRules = Grammar.new
+  ABNFParser.new(CoreRules).parse(<<'End') # taken from RFC 2234
         ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
 
         BIT            =  "0" / "1"
