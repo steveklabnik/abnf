@@ -145,26 +145,26 @@ class RubyRegexp
   end
   EmptySequence = Seq.new([])
 
-  def nongreedy_closure() Rep.create(self, 0, nil, false) end
-  def nongreedy_positive_closure() Rep.create(self, 1, nil, false) end
-  def nongreedy_optional() Rep.create(self, 0, 1, false) end
-  def nongreedy_repeat(m, n=m) Rep.create(self, m, n, false) end
-  def closure() Rep.create(self, 0, nil) end
-  def positive_closure() Rep.create(self, 1, nil) end
-  def optional() Rep.create(self, 0, 1) end
-  def repeat(m, n=m, greedy=true) Rep.create(self, m, n, greedy) end
-  class Rep < RubyRegexp
-    def Rep.create(r, m=0, n=nil, greedy=true)
-      return EmptySequence if m == 0 && n == 0
-      return r if m == 1 && n == 1
-      return EmptySequence if Seq === r && r.empty_sequence?
-      if (Alt === r || CharClass === r) && r.empty_set?
-	return m == 0 ? EmptySequence : EmptySet
-      end
+  def nongreedy_closure() RubyRegexp.rep(self, 0, nil, false) end
+  def nongreedy_positive_closure() RubyRegexp.rep(self, 1, nil, false) end
+  def nongreedy_optional() RubyRegexp.rep(self, 0, 1, false) end
+  def nongreedy_repeat(m, n=m) RubyRegexp.rep(self, m, n, false) end
+  def closure() RubyRegexp.rep(self, 0, nil) end
+  def positive_closure() RubyRegexp.rep(self, 1, nil) end
+  def optional() RubyRegexp.rep(self, 0, 1) end
+  def repeat(m, n=m, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
 
-      Rep.new(r, m, n, greedy)
+  def RubyRegexp.rep(r, m=0, n=nil, greedy=true)
+    return EmptySequence if m == 0 && n == 0
+    return r if m == 1 && n == 1
+    return EmptySequence if Seq === r && r.empty_sequence?
+    if (Alt === r || CharClass === r) && r.empty_set?
+      return m == 0 ? EmptySequence : EmptySet
     end
+    Rep.new(r, m, n, greedy)
+  end
 
+  class Rep < RubyRegexp
     def initialize(r, m=0, n=nil, greedy=true)
       @r = r
       @m = m
