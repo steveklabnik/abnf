@@ -53,10 +53,10 @@ class ABNF
     grammar.regexp(name)
   end
 
-  def ABNF.parse(desc, import_core_rules=true)
+  def ABNF.parse(desc, dont_merge_core_rules=false)
     grammar = ABNF.new
     Parser.new(grammar).parse(desc)
-    grammar.import(CoreRules) if import_core_rules
+    grammar.merge(CoreRules) unless dont_merge_core_rules
     grammar
   end
 
@@ -66,7 +66,7 @@ class ABNF
   end
   attr_reader :names
 
-  def import(g)
+  def merge(g)
     g.each {|name, rhs|
       self.add(name, rhs)
     }

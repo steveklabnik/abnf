@@ -1,7 +1,7 @@
 require 'abnf/parser'
 
 class ABNF
-  CoreRules = ABNF.parse(<<'End', false) # taken from RFC 2234
+  CoreRules = ABNF.parse(<<'End', true) # taken from RFC 2234
         ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
         BIT            =  "0" / "1"
         CHAR           =  %x01-7F ; any 7-bit US-ASCII character, excluding NUL
