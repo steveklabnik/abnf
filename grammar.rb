@@ -431,7 +431,11 @@ class Grammar
     end
 
     def visitAlt(e)
-      "(?:#{e.elts.map {|d| d.accept(self)}.join '|'})"
+      if e.elts.empty?
+        '(?!)'
+      else
+	"(?:#{e.elts.map {|d| d.accept(self)}.join '|'})"
+      end
     end
 
     def visitRep(e)
