@@ -15,7 +15,8 @@ class Grammar
     @rules[name] = rhs
   end
 
-  def to_regexp(name)
+  def regexp(name)
+    @rules[name].to_regexp
   end
 
   include TSort
@@ -28,7 +29,6 @@ class Grammar
 
 ### Abstract Class
   Elt = visitor_pattern {|c| 'visit' + c.name.sub(/\AGrammar::/, '')}
-
   class Elt
     def *(other)
       Con.new(self, other)
@@ -59,6 +59,10 @@ class Grammar
 
     def each_ref(&block)
       self.accept(TraverseRef.new(&block))
+    end
+
+    def to_regexp(env={})
+      raise TypeError.new("cannot convert to regexp.")
     end
   end
 
