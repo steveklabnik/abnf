@@ -1,3 +1,6 @@
+require 'natset'
+require 'tsort'
+
 class Grammar
   def initialize
     @rules = {}
@@ -11,6 +14,17 @@ class Grammar
     @rules[name] = rhs
   end
 
+  def to_regexp(name)
+  end
+
+  include TSort
+  def tsort_each_node(&block)
+    @rules.each_key(&block)
+  end
+  def tsort_each_child(name, &block)
+    @rules[name].each_ref(&block)
+  end
+
   class Elt
     def *(other)
       Con.new(self, other)
@@ -20,24 +34,40 @@ class Grammar
       Alt.new(self, other)
     end
 
+    def **(n)
+      case n
+      when Integer
+        rep(n, n)
+      when Range
+        rep(n.first, n.first + n.size - 1)
+      else
+        raise TypeError.new "not Integer nor Range: #{n}"
+      end
+    end
+
     def rep(min=0, max=nil, greedy=true)
       Rep.new(self, min, max, greedy)
     end
 
     def simplify
-      self.conv(Simplify.new)
+      self.accept(Simplify.new)
+    end
+
+    def Elt.inherited(subclass)
+      subclass.class_eval <<-End
+	def accept(v)
+	  v.visit#{subclass.name.sub(/.*::/, '')} self
+	end
+      End
     end
   end
 
 ### Terminal
   class Term < Elt
-    def initialize(elt)
-      @elt = elt
+    def initialize(natset)
+      @natset = natset
     end
-
-    def conv(c)
-      c.term(@elt)
-    end
+    attr_reader :natset
   end
 
 ### Basic Combinator
@@ -46,10 +76,6 @@ class Grammar
       @elts = elts
     end
     attr_reader :elts
-
-    def conv(c)
-      c.con(*@elts)
-    end
   end
   EmptySequence = Con.new
 
@@ -58,10 +84,6 @@ class Grammar
       @elts = elts
     end
     attr_reader :elts
-
-    def conv(c)
-      c.alt(*@elts)
-    end
   end
   EmptySet = Alt.new
 
@@ -72,10 +94,7 @@ class Grammar
       @max = max
       @greedy = greedy
     end
-
-    def conv(c)
-      c.rep(@elt, @min, @max, @greedy)
-    end
+    attr_reader :elt, :min, :max, :greedy
   end
 
 ### Rule Reference
@@ -83,10 +102,7 @@ class Grammar
     def initialize(name)
       @name = name
     end
-
-    def conv(c)
-      c.ref(@name)
-    end
+    attr_reader :name
   end
 
 ### Backward Reference
@@ -95,20 +111,14 @@ class Grammar
       @name = name
       @elt = elt
     end
-
-    def conv(c)
-      c.backrefdef(@name, @elt)
-    end
+    attr_reader :name, :elt
   end
 
   class Backref < Elt
     def initialize(name)
       @name = name
     end
-
-    def conv(c)
-      c.backref(@name)
-    end
+    attr_reader :name
   end
 
 ### Zero-Width Assertions
@@ -117,10 +127,7 @@ class Grammar
       @elt = elt
       @neg = neg
     end
-
-    def conv(c)
-      c.lookahead(@elt, @neg)
-    end
+    attr_reader :elt, :neg
   end
 
   class BOL < Elt; def to_regexp; '^'; end; end
@@ -137,30 +144,38 @@ class Grammar
     def initialize(elt)
       @elt = elt
     end
-
-    def conv(c)
-      c.nobacktrack(@elt)
-    end
+    attr_reader :elt
   end
 
-### Converter
+  class RegexpOption < Elt
+    def initialize(elt, *opts)
+      @elt = elt
+      @opts = opts
+    end
+    attr_reader :elt, :opts
+  end
+
+### Visitor
   class Copy
-    def term(elt) Term.new(elt) end
-    def con(*elts) Con.new(*elts.map {|e| e.conv(self)}) end
-    def alt(*elts) Alt.new(*elts.map {|e| e.conv(self)}) end
-    def rep(elt, min, max, greedy) Rep.new(elt.conv(self), min, max, greedy) end
-    def backrefdef(name, elt) BackrefDef.new(name, elt.conv(self)) end
-    def backref(name) Backref.new(name) end
-    def lookahead(elt, neg) LookAhead.new(elt.conv(self), neg) end
-    def nobacktrack(elt) NoBacktrack.new(elt.conv(self)) end
+    def visitTerm(e) Term.new(e.natset) end
+    def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
+    def visitAlt(e) Alt.new(*e.elts.map {|d| d.accept(self)}) end
+    def visitRep(e) Rep.new(e.elt.accept(self), e.min, e.max, e.greedy) end
+    def visitBackrefDef(e) BackrefDef.new(e.name, e.elt.accept(self)) end
+    def visitBackref(e) Backref.new(e.name) end
+    def visitLookAhead(e) LookAhead.new(e.elt.accept(self), e.neg) end
+    def visitNoBacktrack(e) NoBacktrack.new(e.elt.accept(self)) end
+    def visitRegexpOption(e) RegexpOption.new(e.elt.accept(self), *e.opts) end
   end
 
   class Simplify < Copy
-    def con(*elts)
+    def visitCon(_)
       result = []
       super.elts.each {|e|
-	if e.kind_of?(Alt) && e.elts.empty?
-	  return e
+	if Alt === e && e.elts.empty?
+	  return EmptySet
+	elsif Term === e && e.natset.empty?
+	  return EmptySet
         elsif e.kind_of? Con
 	  result.concat e.elts
 	else
@@ -174,11 +189,13 @@ class Grammar
       end
     end
 
-    def alt(*elts)
+    def visitAlt(_)
       result = []
       super.elts.each {|e|
-        if e.kind_of? Alt
+        if Alt === e
 	  result.concat e.elts
+	elsif Term === e && !result.empty? && Term === result[-1]
+	  result[-1] = Term.new(result[-1].natset + e.natset)
 	else
 	  result << e
 	end
