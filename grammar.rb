@@ -19,7 +19,7 @@ class Grammar
     env = {}
     each_strongly_connected_component_from(name) {|ns|
       # This condition is too restrictive.
-      # expantion should be supported, at least.
+      # Simple expantion should be supported, at least.
       if ns.length != 1
         raise StandardError.new "cannot convert mutually recusive rules to regexp: #{ns.join(', ')}"
       end
@@ -219,6 +219,14 @@ class Grammar
     def visitLookAhead(e) LookAhead.new(e.elt.accept(self), e.neg) end
     def visitNoBacktrack(e) NoBacktrack.new(e.elt.accept(self)) end
     def visitRegexpOption(e) RegexpOption.new(e.elt.accept(self), *e.opts) end
+    def visitBOL(e) BOL.new end
+    def visitEOL(e) EOL.new end
+    def visitBOS(e) BOS.new end
+    def visitEOS(e) EOS.new end
+    def visitEOSNL(e) EOSNL.new end
+    def visitWordBoundary(e) WordBoundary.new end
+    def visitNonWordBoundary(e) NonWordBoundary.new end
+    def visitPrevMatchEnd(e) PrevMatchEnd.new end
   end
 
   class SubstRuleRef < Copy
@@ -297,6 +305,14 @@ class Grammar
     def visitLookAhead(e) e.elt.accept(self) end
     def visitNoBacktrack(e) e.elt.accept(self) end
     def visitRegexpOption(e) e.elt.accept(self) end
+    def visitBOL(e) end
+    def visitEOL(e) end
+    def visitBOS(e) end
+    def visitEOS(e) end
+    def visitEOSNL(e) end
+    def visitWordBoundary(e) end
+    def visitNonWordBoundary(e) end
+    def visitPrevMatchEnd(e) end
   end
 
   class TraverseRuleRef < Traverse
@@ -498,6 +514,16 @@ if __FILE__ == $0
 	   Grammar::Term.new(NatSet.create(?a)),
 	   Grammar::RuleRef.new(:a)))
        assert_equal("(?:a*)", g.regexp(:a))
+    end
+
+    def test_visitor_methods
+      assert_equal([], Grammar::Copy.non_redefined_visitor_methods)
+      assert_equal([], Grammar::SubstRuleRef.non_redefined_visitor_methods)
+      assert_equal([], Grammar::Simplify.non_redefined_visitor_methods)
+      assert_equal([], Grammar::Traverse.non_redefined_visitor_methods)
+      assert_equal([], Grammar::TraverseRuleRef.non_redefined_visitor_methods)
+      assert_equal([], Grammar::ScanBackref.non_redefined_visitor_methods)
+      assert_equal([], Grammar::RegexpConv.non_redefined_visitor_methods)
     end
   end
 
