@@ -1,10 +1,10 @@
 require 'prettyprint'
 require 'natset'
 
-class RubyRegexp
+class RegexpTree
   @curr_prec = 1
-  def RubyRegexp.inherited(c)
-    return if c.superclass != RubyRegexp
+  def RegexpTree.inherited(c)
+    return if c.superclass != RegexpTree
     c.const_set(:Prec, @curr_prec)
     @curr_prec += 1
   end
@@ -59,9 +59,9 @@ class RubyRegexp
   end
 
   def |(other)
-    RubyRegexp.alt(self, other)
+    RegexpTree.alt(self, other)
   end
-  def RubyRegexp.alt(*rs)
+  def RegexpTree.alt(*rs)
     rs2 = []
     rs.each {|r|
       if Alt === r
@@ -85,7 +85,7 @@ class RubyRegexp
     else; Alt.new(rs2)
     end
   end
-  class Alt < RubyRegexp
+  class Alt < RegexpTree
     def initialize(rs)
       @rs = rs
     end
@@ -114,9 +114,9 @@ class RubyRegexp
   EmptySet = Alt.new([])
 
   def +(other)
-    RubyRegexp.seq(self, other)
+    RegexpTree.seq(self, other)
   end
-  def RubyRegexp.seq(*rs)
+  def RegexpTree.seq(*rs)
     rs2 = []
     rs.each {|r|
       if Seq === r
@@ -137,7 +137,7 @@ class RubyRegexp
     else; Seq.new(rs2)
     end
   end
-  class Seq < RubyRegexp
+  class Seq < RegexpTree
     def initialize(rs)
       @rs = rs
     end
@@ -160,18 +160,18 @@ class RubyRegexp
   end
   EmptySequence = Seq.new([])
 
-  def nongreedy_closure() RubyRegexp.rep(self, 0, nil, false) end
-  def nongreedy_positive_closure() RubyRegexp.rep(self, 1, nil, false) end
-  def nongreedy_optional() RubyRegexp.rep(self, 0, 1, false) end
-  def nongreedy_ntimes(m, n=m) RubyRegexp.rep(self, m, n, false) end
-  def nongreedy_rep(m=0, n=nil) RubyRegexp.rep(self, m, n, false) end
-  def closure(greedy=true) RubyRegexp.rep(self, 0, nil, greedy) end
-  def positive_closure(greedy=true) RubyRegexp.rep(self, 1, nil, greedy) end
-  def optional(greedy=true) RubyRegexp.rep(self, 0, 1, greedy) end
-  def ntimes(m, n=m, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
-  def rep(m=0, n=nil, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
+  def nongreedy_closure() RegexpTree.rep(self, 0, nil, false) end
+  def nongreedy_positive_closure() RegexpTree.rep(self, 1, nil, false) end
+  def nongreedy_optional() RegexpTree.rep(self, 0, 1, false) end
+  def nongreedy_ntimes(m, n=m) RegexpTree.rep(self, m, n, false) end
+  def nongreedy_rep(m=0, n=nil) RegexpTree.rep(self, m, n, false) end
+  def closure(greedy=true) RegexpTree.rep(self, 0, nil, greedy) end
+  def positive_closure(greedy=true) RegexpTree.rep(self, 1, nil, greedy) end
+  def optional(greedy=true) RegexpTree.rep(self, 0, 1, greedy) end
+  def ntimes(m, n=m, greedy=true) RegexpTree.rep(self, m, n, greedy) end
+  def rep(m=0, n=nil, greedy=true) RegexpTree.rep(self, m, n, greedy) end
 
-  def RubyRegexp.rep(r, m=0, n=nil, greedy=true)
+  def RegexpTree.rep(r, m=0, n=nil, greedy=true)
     return EmptySequence if m == 0 && n == 0
     return r if m == 1 && n == 1
     return EmptySequence if Seq === r && r.empty_sequence?
@@ -181,7 +181,7 @@ class RubyRegexp
     Rep.new(r, m, n, greedy)
   end
 
-  class Rep < RubyRegexp
+  class Rep < RegexpTree
     def initialize(r, m=0, n=nil, greedy=true)
       @r = r
       @m = m
@@ -222,10 +222,10 @@ class RubyRegexp
     end
   end
 
-  class Elt < RubyRegexp
+  class Elt < RegexpTree
   end
 
-  def RubyRegexp.charclass(natset)
+  def RegexpTree.charclass(natset)
     if natset.empty?
       EmptySet
     else
@@ -310,15 +310,15 @@ class RubyRegexp
     end
   end
 
-  def RubyRegexp.linebeg() Special.new('^') end
-  def RubyRegexp.lineend() Special.new('$') end
-  def RubyRegexp.strbeg() Special.new('\A') end
-  def RubyRegexp.strend() Special.new('\z') end
-  def RubyRegexp.strlineend() Special.new('\Z') end
-  def RubyRegexp.word_boundary() Special.new('\b') end
-  def RubyRegexp.non_word_boundary() Special.new('\B') end
-  def RubyRegexp.previous_match() Special.new('\G') end
-  def RubyRegexp.backref(n) Special.new("\\#{n}") end
+  def RegexpTree.linebeg() Special.new('^') end
+  def RegexpTree.lineend() Special.new('$') end
+  def RegexpTree.strbeg() Special.new('\A') end
+  def RegexpTree.strend() Special.new('\z') end
+  def RegexpTree.strlineend() Special.new('\Z') end
+  def RegexpTree.word_boundary() Special.new('\b') end
+  def RegexpTree.non_word_boundary() Special.new('\B') end
+  def RegexpTree.previous_match() Special.new('\G') end
+  def RegexpTree.backref(n) Special.new("\\#{n}") end
   class Special < Elt
     def initialize(str)
       @str = str
@@ -348,9 +348,9 @@ class RubyRegexp
     end
   end
 
-  # def RubyRegexp.comment(str) ... end # (?#...)
+  # def RegexpTree.comment(str) ... end # (?#...)
 
-  def RubyRegexp.str(str)
+  def RegexpTree.str(str)
     ccs = []
     str.each_byte {|ch|
       ccs << CharClass.new(NatSet.new(ch))

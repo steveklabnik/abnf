@@ -43,12 +43,12 @@ require 'tsort'
 
 class ABNF
   def ABNF.regexp(desc, name=nil)
-    ABNF.ruby_regexp(desc, name).regexp
+    ABNF.regexp_tree(desc, name).regexp
   end
 
-  def ABNF.ruby_regexp(desc, name=nil)
+  def ABNF.regexp_tree(desc, name=nil)
     grammar = ABNF.parse(desc)
-    grammar.ruby_regexp(name || grammar.start_symbol)
+    grammar.regexp_tree(name || grammar.start_symbol)
   end
 
   def ABNF.parse(desc, dont_merge_core_rules=false)
@@ -208,7 +208,7 @@ if $0 == __FILE__
   End
 
   # URI-reference [RFC2396]
-  ABNF.ruby_regexp(<<-'End').pretty_display
+  ABNF.regexp_tree(<<-'End').pretty_display
         URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
         absoluteURI   = scheme ":" ( hier_part | opaque_part )
         relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
