@@ -1,6 +1,8 @@
 =begin
 = ABNF
 
+convert ABNF to Regexp.
+
 == Example
 
   # IPv6 [RFC2373]
@@ -22,16 +24,20 @@ Note that this is wrong because it doesn't match to "::13.1.68.3".
                    "8" | "9"
   End
 
-== ABNF class
+== ABNF
 
 === class methods
 
---- regexp(abnf_description[, start_symbol])
-    converts ((|abnf_description|)) to a regular expression corresponding with
+--- ABNF.regexp(abnf_description, start_symbol=nil)
+    converts ((|abnf_description|)) to a Regexp object corresponding with
     ((|start_symbol|)).
 
     If ((|start_symbol|)) is not specified, first symbol in
     ((|abnf_description|)) is used.
+
+--- ABNF.regexp_tree(abnf_description, start_symbol=nil)
+    converts ((|abnf_description|)) to a ((<RegexpTree|URL:regexptree.html>)) object corresponding with
+    ((|start_symbol|)).
 
 = Note
 

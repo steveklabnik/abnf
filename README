@@ -1,6 +1,6 @@
 = ABNF
 This is a library to convert ABNF (Augmented Backus-Naur Form) to
-Regexp (Regular Expression) writtin in Ruby.
+Regexp (Regular Expression) written in Ruby.
 It parses a description according to ABNF defined by RFC 2234 and some variants.
 Then the parsed grammar is transformed to recursion free.
 Although the transformation is impossible in general, 
