@@ -98,9 +98,9 @@ module Kernel
         def self.non_redefined_visitor_methods
 	  result = []
 	  VisitorMethods.each {|n, m|
-	    #p [m.to_s, instance_method(n).to_s]
-	    if m.to_s.sub(/\A[^\(]*\(/, '') ==
-	       instance_method(n).to_s.sub(/\A[^\(]*\(/, '')
+	    #p [m.inspect, instance_method(n).inspect]
+	    if m.inspect.sub(/\A[^\(]*\(/, '') ==
+	       instance_method(n).inspect.sub(/\A[^\(]*\(/, '')
 	      result << n
 	    end
 	  }
