@@ -201,6 +201,11 @@ class NatSet
       }
     }
   end
+
+  def inspect
+    require 'pp'
+    PP.singleline_pp(self, '')
+  end
 end
 
 if __FILE__ == $0
