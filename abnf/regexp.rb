@@ -2,60 +2,10 @@ require 'abnf/grammar'
 require 'rubyregexp'
 
 class ABNF
-  def regexp(name)
-    env = {}
-    each_strongly_connected_component_from(name) {|ns|
-      # This condition is too restrictive.
-      # Simple expantion should be supported, at least.
-      if ns.length != 1
-	raise StandardError.new("cannot convert mutually recusive rules to regexp: #{ns.join(', ')}")
-      end
-      n = ns.first
-      e = @rules[n]
-      # Convert a recursive rule to non-recursive rule if possible.
-      # This conversion is *not* perfect.
-      # It may fail even if easily possible.
-      # More work (survey) is needed.
-      #
-      # X = a X | b | X c
-      #  =>
-      # X = a* b c*
-      if Alt === e
-	left = []
-	middle = []
-	right = []
-	e.elts.each {|branch|
-	  if Seq === branch
-	    if branch.elts.empty?
-	      middle << branch
-	    else
-	      if Var === branch.elts.first && branch.elts.first.name == n
-		right << Seq.new(*branch.elts[1..-1])
-	      elsif Var === branch.elts.last && branch.elts.last.name == n
-		left << Seq.new(*branch.elts[0...-1])
-	      else
-		middle << branch
-	      end
-	    end
-	  else
-	    middle << branch
-	  end
-	}
-	e = Seq.new(Alt.new(*left).rep, Alt.new(*middle), Alt.new(*right).rep)
-      end
-
-      e.each_var {|n2|
-	if n == n2
-	  raise StandardError.new("too complex to convert to regexp: #{n}")
-	end
-      }
-
-      env[n] = e.subst_var {|n2| env[n2] }
-    }
-    env[name].regexp
-  end
-
-  # very heuristic method
+  # Convert a recursive rule to non-recursive rule if possible.
+  # This conversion is *not* perfect.
+  # It may fail even if possible.
+  # More work (survey) is needed.
   def regexp(name)
     env = {}
     each_strongly_connected_component_from(name) {|ns|
@@ -76,6 +26,10 @@ class ABNF
 	  end
 	}
 
+	# X = Y | a
+	# Y = X | b
+	# => 
+	# Y = Y | a | b
 	rules.each {|n, e|
 	  r = rs[n]
 	  if r & JustRecursion != 0 && r & ~(NonRecursion|JustRecursion) == 0
@@ -89,6 +43,9 @@ class ABNF
 	}
 	next if updated
 
+	# X = X a | b
+	# =>
+	# X = b a*
 	rules.each {|n, e|
 	  r = rs[n]
 	  if r & LeftRecursion != 0 && r & ~(NonRecursion|JustRecursion|LeftRecursion) == 0
@@ -102,6 +59,9 @@ class ABNF
 	}
 	next if updated
 
+	# X = a X | b
+	# =>
+	# X = a* b
 	rules.each {|n, e|
 	  r = rs[n]
 	  if r & RightRecursion != 0 && r & ~(NonRecursion|JustRecursion|RightRecursion) == 0
@@ -129,8 +89,11 @@ class ABNF
 	if r == NonRecursion
 	  resolved_rules[n] = e
 	else
+	  # X = a X | b | X c
+	  # =>
+	  # X = a* b c*
 	  left, middle, right = e.split_recursion(n)
-	  resolved_rules[n] = Seq.new(Alt.new(*left).rep, Alt.new(*middle), Alt.new(*right).rep)
+	  resolved_rules[n] = Seq.new(Alt.new(left).rep, Alt.new(middle), Alt.new(right).rep)
 	end
       end
 
@@ -204,6 +167,19 @@ class ABNF
       }
       [nonrec, rest]
     end
+
+    def split_recursion(n)
+      rest_left = EmptySet
+      nonrec = EmptySet
+      rest_right = EmptySet
+      @elts.each {|e|
+        rest_left1, nonrec1, rest_right1 = e.split_recursion(n)
+	rest_left |= rest_left1
+	nonrec |= nonrec1
+	rest_right |= rest_right1
+      }
+      [rest_left, nonrec, rest_right]
+    end
   end
 
   class Seq
@@ -269,6 +245,32 @@ class ABNF
 	[nonrec, rest]
       end
     end
+
+    def split_recursion(n)
+      case @elts.length
+      when 0
+        [EmptySet, self, EmptySet]
+      when 1
+        @elts.first.split_recursion(n)
+      else
+        leftmost_nonrec, leftmost_rest_right = @elts.first.split_left_recursion(n)
+        rightmost_nonrec, rightmost_rest_left = @elts.last.split_right_recursion(n)
+	rest_middle = Seq.new(*@elts[1...-1])
+
+	if leftmost_rest_right.empty_set?
+	  [leftmost_nonrec + rest_middle + rightmost_rest_left,
+	   leftmost_nonrec + rest_middle + rightmost_nonrec,
+	   EmptySet]
+	elsif rightmost_rest_left.empty_set?
+	  [EmptySet,
+	   leftmost_nonrec + rest_middle + rightmost_nonrec,
+	   leftmost_rest_right + rest_middle + rightmost_nonrec]
+	else
+	  raise StandardError.new("non left/right recursion") # bug
+	end
+      end
+    end
+
   end
 
   class Rep
@@ -284,6 +286,10 @@ class ABNF
       [self, EmptySet]
     end
     alias split_right_recursion split_left_recursion
+
+    def split_recursion(n)
+      [EmptySet, self, EmptySet]
+    end
   end
 
   class Term
@@ -299,6 +305,10 @@ class ABNF
       [self, EmptySet]
     end
     alias split_right_recursion split_left_recursion
+
+    def split_recursion(n)
+      [EmptySet, self, EmptySet]
+    end
   end
 
   class Var
@@ -326,6 +336,14 @@ class ABNF
       end
     end
     alias split_right_recursion split_left_recursion
+
+    def split_recursion(n)
+      if n == self.name
+	[EmptySet, EmptySet, EmptySet]
+      else
+	[EmptySet, self, EmptySet]
+      end
+    end
   end
 
   class Alt; def regexp() RubyRegexp.alt(*@elts.map {|e| e.regexp}) end end

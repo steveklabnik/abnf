@@ -29,4 +29,16 @@ class TestABNF < Test::Unit::TestCase
     End
   end
 
+  def test_both_recursion_1
+    assert_equal('[Aa]*[Bb][Cc]*', ABNF.ruby_regexp(<<-'End').to_s)
+      n = "a" n | "b" | n "c"
+    End
+  end
+
+  def test_both_recursion_2
+    assert_equal('[Aa]*[Bb][Cc]*', ABNF.ruby_regexp(<<-'End').to_s)
+      n = "a" n | "b" | n "c" | n
+    End
+  end
+
 end

@@ -2,6 +2,14 @@ require 'natset'
 
 class ABNF
   class Elt
+    def empty_set?
+      false
+    end
+
+    def empty_sequence?
+      false
+    end
+
     def +(other)
       Seq.new(self, other)
     end
