@@ -1,7 +1,7 @@
 # RFC 2234
 class ABNFParser
 rule
-  rulelist	:		{ result = [] }
+  rulelist	:		{ result = nil }
           	| rulelist rule	{ 
 				  name = val[1][0]
 				  rhs = val[1][1].simplify
@@ -10,7 +10,7 @@ rule
 				  else
 				    @grammar[name] = rhs
 				  end
-		                  result << name
+		                  result ||= name
 				}
 
   rule	: defname assign alt	{ result = [val[0], val[2]] }
@@ -45,11 +45,11 @@ module ABNF
     grammar = Grammar.new
     grammar.import(CoreRules)
     parser = ABNFParser.new(grammar)
-    names = parser.parse(desc)
-    if names.empty?
+    first = parser.parse(desc)
+    if first.nil?
       raise StandardError.new "no rule defined"
     end
-    name ||= names.first
+    name ||= first
     grammar.regexp(name)
   end
 
