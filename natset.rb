@@ -48,10 +48,10 @@ class NatSet
     es.each {|e|
       case e
       when Range
-	unless Integer === e.begin
+	unless Integer === e.begin && 0 <= e.begin
 	  raise ArgumentError.new("bad value for #{self}.new: #{e}")
 	end
-        if e.end == -1
+        if e.end < 0
 	  r += self._new(e.begin)
 	elsif e.exclude_end?
 	  r += self._new(e.begin, e.end)
@@ -59,6 +59,9 @@ class NatSet
 	  r += self._new(e.begin, e.end+1)
 	end
       when Integer
+	unless 0 <= e
+	  raise ArgumentError.new("bad value for #{self}.new: #{e}")
+	end
 	r += self._new(e, e+1)
       when NatSet
 	r += e
@@ -323,6 +326,8 @@ if __FILE__ == $0
       assert_equal([1, 16], NatSet.new(11..15, 1..10).es)
       assert_raises(ArgumentError) {NatSet.new("a")}
       assert_raises(ArgumentError) {NatSet.new("a".."b")}
+      assert_raises(ArgumentError) {NatSet.new(-1)}
+      assert_raises(ArgumentError) {NatSet.new(-1..3)}
     end
 
     def test_split
