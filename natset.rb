@@ -184,6 +184,23 @@ class NatSet
     self.class._new(*es0)
   end
 
+  def pretty_print(pp)
+    pp.object_group(self) {
+      pp.text ':'
+      (0...@es.length).step(2) {|i|
+	pp.breakable
+        e1 = @es[i]
+        e2 = @es[i+1]
+	if e2 == nil
+	  pp.text "#{e1}..inf"
+	elsif e1 == e2 - 1
+	  pp.text e1.to_s
+	else
+	  pp.text "#{e1}..#{e2-1}"
+	end
+      }
+    }
+  end
 end
 
 if __FILE__ == $0
