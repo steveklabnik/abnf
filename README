@@ -1,0 +1,90 @@
+= ABNF
+This is a library to convert ABNF (Augmented Backus-Naur Form) to
+Regexp (Regular Expression) writtin in Ruby.
+It parses a description according to ABNF defined by RFC 2234 and some variants.
+Then the parsed grammar is transformed to recursion free.
+Although the transformation is impossible in general, 
+the library transform left and right recursion.
+The recursion free grammar can be printed as Regexp literal
+which is suitable in Ruby source code.
+The literal is pretty readable because parentheses are minimized and
+properly indented by the Wadler's pretty printing algebra.
+It is also possible to use the Regexp just in place.
+
+= Author
+Tanaka Akira <akr@m17n.org>
+
+= Example
+Following example shows URI-reference defined by RFC 2396 can be converted to
+Regexp.
+Note that URI-reference is already recursion free.
+
+  % cat sample/uri.rb 
+  require 'pp'
+  require 'abnf'
+
+  # URI-reference [RFC2396]
+  pp ABNF.regexp_tree(<<-'End')
+	URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
+	absoluteURI   = scheme ":" ( hier_part | opaque_part )
+	relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
+
+	(...snip...)
+
+	lowalpha = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" |
+		   "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" |
+		   "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+	upalpha  = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" |
+		   "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" |
+		   "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+	digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
+		   "8" | "9"
+  End
+  % ruby sample/uri.rb    
+  %r{(?:[A-Za-z][\x2b\x2d\x2e0-9A-Za-z]*:
+	(?:(?://
+	      (?:(?:(?:(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-;=A-Z_a-z~])*@)?
+		    (?:(?:(?:[0-9A-Za-z]|[0-9A-Za-z][\x2d0-9A-Za-z]*[0-9A-Za-z])
+			  \x2e)*(?:[A-Za-z]|[A-Za-z][\x2d0-9A-Za-z]*[0-9A-Za-z])
+		       \x2e?|
+		       \d+\x2e\d+\x2e\d+\x2e\d+)(?::\d*)?)?|
+		 (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-;=@-Z_a-z~])+)
+	      (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+		 (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*
+		 (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+		    (?:;
+		       (?:%[0-9A-Fa-f][0-9A-Fa-f]|
+			  [!\x24&-\x2e0-:=@-Z_a-z~])*)*)*)?|
+	      /(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+	      (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*
+	      (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+		 (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*)*)
+	   (?:\x3f(?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)?|
+	   (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-;=\x3f-Z_a-z~])
+	   (?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)|
+	(?://
+	   (?:(?:(?:(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-;=A-Z_a-z~])*@)?
+		 (?:(?:(?:[0-9A-Za-z]|[0-9A-Za-z][\x2d0-9A-Za-z]*[0-9A-Za-z])
+		       \x2e)*(?:[A-Za-z]|[A-Za-z][\x2d0-9A-Za-z]*[0-9A-Za-z])
+		    \x2e?|
+		    \d+\x2e\d+\x2e\d+\x2e\d+)(?::\d*)?)?|
+	      (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-;=@-Z_a-z~])+)
+	   (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+	      (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*
+	      (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+		 (?:;
+		    (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*)*)?|
+	   /(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+	   (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*
+	   (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+	      (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*)*|
+	   (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-9;=@-Z_a-z~])+
+	   (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+	      (?:;(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*
+	      (?:/(?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*
+		 (?:;
+		    (?:%[0-9A-Fa-f][0-9A-Fa-f]|[!\x24&-\x2e0-:=@-Z_a-z~])*)*)*)?)
+	(?:\x3f(?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)?)?
+     (?:\x23(?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)?}x
+  %
+
