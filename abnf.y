@@ -145,9 +145,9 @@ module ABNF
 	  }
 	  yield :val, Grammar::Con.new(*es)
 	when /\A<([\x20-\x3D\x3F-\x7E]*)>/
-	  raise ScanError.new "prose-val is not supported: #{$&}"
+	  raise ScanError.new("prose-val is not supported: #{$&}")
 	else
-	  raise ScanError.new line
+	  raise ScanError.new(line)
 	end
 	line[0, t.length] = ''
       end

@@ -35,7 +35,7 @@ class Grammar
       # This condition is too restrictive.
       # Simple expantion should be supported, at least.
       if ns.length != 1
-        raise StandardError.new "cannot convert mutually recusive rules to regexp: #{ns.join(', ')}"
+        raise StandardError.new("cannot convert mutually recusive rules to regexp: #{ns.join(', ')}")
       end
       n = ns.first
       e = @rules[n]
@@ -73,7 +73,7 @@ class Grammar
 
       e.each_ruleref {|n2|
         if n == n2
-	  raise StandardError.new "too complex to convert to regexp: #{n}"
+	  raise StandardError.new("too complex to convert to regexp: #{n}")
 	end
       }
 
@@ -90,7 +90,7 @@ class Grammar
   end
   def tsort_each_child(name)
     unless @rules.include? name
-      raise StandardError.new "grammar symbol undefined: #{name}"
+      raise StandardError.new("grammar symbol undefined: #{name}")
     end
     @rules.fetch(name).each_ruleref {|e| yield e.name}
   end
@@ -113,7 +113,7 @@ class Grammar
       when Range
         rep(n.first, n.first + n.size - 1)
       else
-        raise TypeError.new "not Integer nor Range: #{n}"
+        raise TypeError.new("not Integer nor Range: #{n}")
       end
     end
 
@@ -463,7 +463,7 @@ class Grammar
     end
 
     def visitRuleRef(e)
-      raise StandardError "cannot convert rule reference to regexp: #{e.name}"
+      raise StandardError.new("cannot convert rule reference to regexp: #{e.name}")
     end
 
     def visitBackrefDef(e)

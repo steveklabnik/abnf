@@ -38,7 +38,7 @@ class NatSet
       case e
       when Range
 	unless Integer === e.begin
-	  raise ArgumentError.new "bad value for #{self}.create: #{e}"
+	  raise ArgumentError.new("bad value for #{self}.create: #{e}")
 	end
 	if e.exclude_end?
 	  r += self.new(e.begin, e.end)
@@ -50,7 +50,7 @@ class NatSet
       when NatSet
 	r += e
       else
-        raise ArgumentError.new "bad value for #{self}.create: #{e}"
+        raise ArgumentError.new("bad value for #{self}.create: #{e}")
       end
     }
     r
