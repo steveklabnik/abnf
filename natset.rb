@@ -44,7 +44,9 @@ class NatSet
 	unless Integer === e.begin
 	  raise ArgumentError.new("bad value for #{self}.new: #{e}")
 	end
-	if e.exclude_end?
+        if e.end == -1
+	  r += self._new(e.begin)
+	elsif e.exclude_end?
 	  r += self._new(e.begin, e.end)
 	else
 	  r += self._new(e.begin, e.end+1)
