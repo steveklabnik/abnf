@@ -100,7 +100,7 @@ class ABNF
     }
   end
 
-  def delete_unreachable(starts)
+  def delete_unreachable!(starts)
     rules = {}
     id_map = {}
     stack = []
@@ -133,10 +133,10 @@ require 'abnf/corerules'
 require 'abnf/regexp'
 
 class ABNF
-  def delete_useless(starts=nil)
+  def delete_useless!(starts=nil)
     if starts
       starts = [starts] if Symbol === starts
-      delete_unreachable(starts)
+      delete_unreachable!(starts)
     end
 
     useful_names = {}
