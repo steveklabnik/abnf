@@ -300,7 +300,6 @@ class RubyRegexp
   def RubyRegexp.strbeg() Special.new('\A') end
   def RubyRegexp.strend() Special.new('\z') end
   def RubyRegexp.strlineend() Special.new('\Z') end
-  def RubyRegexp.strlineend() Special.new('\Z') end
   def RubyRegexp.word_boundary() Special.new('\b') end
   def RubyRegexp.non_word_boundary() Special.new('\B') end
   def RubyRegexp.previous_match() Special.new('\G') end
