@@ -87,46 +87,54 @@ The definitions of C, D and E are same as follows without visitor.rb.
 =end
 
 module Kernel
-  def visitor_pattern(&generate_methodname)
-    generate_methodname ||= lambda {|subclass|
+  def visitor_pattern(element_class=nil, visitor_class=nil, &gen_methodname)
+    element_class ||= Class.new
+
+    unless visitor_class
+      visitor_class = Class.new
+      element_class.const_set('Visitor', visitor_class)
+    end
+
+    gen_methodname ||= lambda {|subclass|
       ('visit_' + subclass.name.sub(/::/, '_')).intern
     }
-    Class.new {|c|
-      visitor_class = Class.new
-      visitor_methods = visitor_class.const_set('VisitorMethods', [])
-      visitor_class.class_eval <<-'End'
-        def self.non_redefined_visitor_methods
-	  result = []
-	  VisitorMethods.each {|n, m|
-	    #p [m.inspect, instance_method(n).inspect]
-	    if m.inspect.sub(/\A[^\(]*\(/, '') ==
-	       instance_method(n).inspect.sub(/\A[^\(]*\(/, '')
-	      result << n
-	    end
-	  }
-	  result
-	end
-      End
-      c.const_set('Visitor', visitor_class)
-      class << c
-	self
-      end.instance_eval {
-	define_method(:inherited) {|subclass|
-	  methodname = generate_methodname.call(subclass)
-	  subclass.class_eval <<-End
-	    def accept(v)
-	      v.#{methodname} self
-	    end
-	  End
-	  visitor_class.class_eval {
-	    define_method(methodname) {|d| raise NotImplementedError.new}
-	  }
-	  visitor_methods << [
-	    methodname,
-	    visitor_class.instance_method(methodname)
-	  ]
+
+    visitor_methods = visitor_class.const_set('VisitorMethods', [])
+
+    visitor_class.class_eval <<-'End'
+      def self.non_redefined_visitor_methods
+	result = []
+	VisitorMethods.each {|n, m|
+	  #p [m.inspect, instance_method(n).inspect]
+	  if m.inspect.sub(/\A[^\(]*\(/, '') ==
+	     instance_method(n).inspect.sub(/\A[^\(]*\(/, '')
+	    result << n
+	  end
 	}
+	result
+      end
+    End
+
+    class << element_class
+      self
+    end.instance_eval {
+      define_method(:inherited) {|subclass|
+	methodname = gen_methodname.call(subclass)
+	subclass.class_eval <<-End
+	  def accept(v)
+	    v.#{methodname} self
+	  end
+	End
+	visitor_class.class_eval {
+	  define_method(methodname) {|d| raise NotImplementedError.new}
+	}
+	visitor_methods << [
+	  methodname,
+	  visitor_class.instance_method(methodname)
+	]
       }
     }
+
+    element_class
   end
 end
