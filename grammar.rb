@@ -341,8 +341,8 @@ class Grammar
       @env = env
     end
 
-    Empty = NatSet.empty
-    Full = NatSet.all
+    None = NatSet.empty
+    Any = NatSet.all
     NL = NatSet.create(?\n)
     NonNL = ~NL
     Word = NatSet.create(?0..?9, ?A..?Z, ?_, ?a..?z)
@@ -354,9 +354,9 @@ class Grammar
 
     def visitTerm(e)
       case e.natset
-      when Empty
+      when None
         '(?!)'
-      when Full
+      when Any
         '[\s\S]'
       when NL
         '\n'
