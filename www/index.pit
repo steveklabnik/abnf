@@ -31,7 +31,7 @@ Also note that the example works well without installing the library after make.
         absoluteURI   = scheme ":" ( hier_part | opaque_part )
         relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
 
-        (...snip...)
+        ...snip...
 
         lowalpha = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" |
                    "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" |
@@ -90,7 +90,7 @@ The result is follows:
         (?:\x3f(?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)?)?
      (?:\x23(?:[!\x24&-;=\x3f-Z_a-z~]|%[0-9A-Fa-f][0-9A-Fa-f])*)?}x
 
-left- and right-recursion can be handled as:
+Following example contains right-recursion:
 
   pp ABNF.regexp_tree(<<'End')
     s0 = n0 s0 / n1 s2 / n2 s1 / ""
@@ -101,7 +101,7 @@ left- and right-recursion can be handled as:
     n2 = "2" / "5" / "8"
   End
 
-The above ABNF description represents multiples of 3 and the result is follows:
+The above ABNF description represents decimal numbers which are multiples of 3 and the result is follows:
 
   %r{(?:[0369]|
 	[147](?:[0369]|[147][0369]*[258])*(?:[147][0369]*[147]|[258])|
