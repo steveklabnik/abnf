@@ -16,7 +16,62 @@ class Grammar
   end
 
   def regexp(name)
-    @rules[name].accept(RegexpConv.new({}))
+    env = {}
+    each_strongly_connected_component_from(name) {|ns|
+      # This condition is too restrictive.
+      # expantion should be supported, at least.
+      if ns.length != 1
+        raise StandardError.new "cannot convert mutually recusive rules to regexp: #{ns.join(', ')}"
+      end
+      n = ns.first
+      e = @rules[n]
+      # Convert a recursive rule to non-recursive rule if possible.
+      # This conversion is *not* perfect.
+      # It may fail even if possible.
+      # More work (survey) is needed.
+      #
+      # X = a X | b | X c
+      # =>
+      # X = a* b c*
+      if Alt === e
+        left = []
+        middle = []
+        right = []
+        e.elts.each {|branch|
+          if Con === branch
+            if branch.elts.empty?
+              middle << branch
+            else
+              if Ref === branch.elts.first && branch.elts.first.name == n
+                right << Con.new(*branch.es[1..-1])
+              elsif Ref === branch.elts.last && branch.elts.last.name == n
+                left << Con.new(*branch.es[0...-1])
+              else
+                middle << branch
+              end
+            end
+          else
+            middle << branch
+          end
+        }
+        es = []
+        es << Alt.new(*left).rep unless left.empty?
+        es << Alt.new(*middle)
+        es << Alt.new(*right).rep unless right.empty?
+        e = Con.new(*es)
+      end
+
+      e.each_ref {|n2|
+        if n == n2
+	  raise StandardError.new "too complex to convert to regexp: #{n}"
+	end
+      }
+
+      env[n] = e.accept(SubstRef.new(env))
+    }
+    r = env[name].simplify
+    r.accept(ScanBackref.new(env = {}))
+    r.accept(RegexpConv.new(env))
   end
 
   include TSort
@@ -59,10 +114,6 @@ class Grammar
 
     def each_ref(&block)
       self.accept(TraverseRef.new(&block))
-    end
-
-    def to_regexp(env={})
-      raise TypeError.new("cannot convert to regexp.")
     end
   end
 
@@ -161,29 +212,6 @@ class Grammar
   end
 
 ### Visitor
-  class Traverse < Elt::Visitor
-    def visitTerm(e) end
-    def visitCon(e) e.elts.each {|d| d.accept(self)} end
-    def visitAlt(e) e.elts.each {|d| d.accept(self)} end
-    def visitRep(e) e.elt.accept(self) end
-    def visitRef(e) end
-    def visitBackrefDef(e) e.elt.accept(self) end
-    def visitBackref(e) end
-    def visitLookAhead(e) e.elt.accept(self) end
-    def visitNoBacktrack(e) e.elt.accept(self) end
-    def visitRegexpOption(e) e.elt.accept(self) end
-  end
-
-  class TraverseRef < Traverse
-    def initialize(&block)
-      @block = block
-    end
-
-    def visitRef(e)
-      @block.call(e)
-    end
-  end
-
   class Copy < Elt::Visitor
     def visitTerm(e) Term.new(e.natset) end
     def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
@@ -195,6 +223,20 @@ class Grammar
     def visitLookAhead(e) LookAhead.new(e.elt.accept(self), e.neg) end
     def visitNoBacktrack(e) NoBacktrack.new(e.elt.accept(self)) end
     def visitRegexpOption(e) RegexpOption.new(e.elt.accept(self), *e.opts) end
+  end
+
+  class SubstRef < Copy
+    def initialize(env)
+      @env = env
+    end
+
+    def visitRef(e)
+      if @env.include? e.name
+        @env[e.name]
+      else
+        e
+      end
+    end
   end
 
   class Simplify < Copy
@@ -234,6 +276,51 @@ class Grammar
       else
 	Alt.new(*result)
       end
+    end
+
+    def visitRep(_)
+      e = super
+      if Alt === e.elt && e.elt.elts.empty?
+	EmptySequence
+      elsif Term === e.elt && e.elt.natset.empty?
+	EmptySequence
+      else
+        e
+      end
+    end
+  end
+
+  class Traverse < Elt::Visitor
+    def visitTerm(e) end
+    def visitCon(e) e.elts.each {|d| d.accept(self)} end
+    def visitAlt(e) e.elts.each {|d| d.accept(self)} end
+    def visitRep(e) e.elt.accept(self) end
+    def visitRef(e) end
+    def visitBackrefDef(e) e.elt.accept(self) end
+    def visitBackref(e) end
+    def visitLookAhead(e) e.elt.accept(self) end
+    def visitNoBacktrack(e) e.elt.accept(self) end
+    def visitRegexpOption(e) e.elt.accept(self) end
+  end
+
+  class TraverseRef < Traverse
+    def initialize(&block)
+      @block = block
+    end
+
+    def visitRef(e)
+      @block.call(e)
+    end
+  end
+
+  class ScanBackref < Traverse
+    def initialize(env)
+      @env = env
+    end
+
+    def visitBackrefDef(e)
+      @env[e.name] = @env.size + 1
+      super
     end
   end
 
@@ -373,6 +460,15 @@ class Grammar
       opt.sub!(/-\z/, '')
       "(?#{opt}:#{e.elt.accept(self)})"
     end
+
+    def visitBOL(e) '^' end
+    def visitEOL(e) '$' end
+    def visitBOS(e) '\A' end
+    def visitEOS(e) '\z' end
+    def visitEOSNL(e) '\Z' end
+    def visitWordBoundary(e) '\b' end
+    def visitNonWordBoundary(e) '\B' end
+    def visitPrevMatchEnd(e) '\G' end
   end
 
 end
