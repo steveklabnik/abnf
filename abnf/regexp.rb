@@ -2,6 +2,9 @@ require 'abnf/abnf'
 require 'regexptree'
 
 class ABNF
+  class TooComplex < StandardError
+  end
+
   def ABNF.regexp(desc, name=nil)
     ABNF.regexp_tree(desc, name).regexp
   end
@@ -38,7 +41,7 @@ class ABNF
 	  e = rules[n]
 	  rs[n] = e.recursion(ns, n)
 	  if rs[n] & OtherRecursion != 0
-	    raise StandardError.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
+	    raise TooComplex.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
 	  end
 	}
 
@@ -109,14 +112,14 @@ class ABNF
       end
 
       if 1 < rules.length
-	raise StandardError.new("too complex to convert to regexp: (#{ns.join(', ')})")
+	raise TooComplex.new("too complex to convert to regexp: (#{ns.join(', ')})")
       end
 
       if rules.length == 1
 	n, e = rules.shift
 	r = e.recursion(ns, n)
 	if r & OtherRecursion != 0
-	  raise StandardError.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
+	  raise TooComplex.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
 	end
 	if r == NonRecursion
 	  resolved_rules[n] = e
@@ -142,7 +145,7 @@ class ABNF
       resolved_rules.tsort_each {|n|
         env[n] = resolved_rules[n].subst_var {|n2|
 	  unless env[n2]
-	    raise StandardError.new("unresolved nonterminal: #{n}") # bug
+	    raise Exception.new("unresolved nonterminal: #{n}") # bug
 	  end
 	  env[n2]
 	}
@@ -299,7 +302,7 @@ class ABNF
 	   leftmost_nonrec + rest_middle + rightmost_nonrec,
 	   leftmost_rest_right + rest_middle + rightmost_nonrec]
 	else
-	  raise StandardError.new("non left/right recursion") # bug
+	  raise Exception.new("non left/right recursion") # bug
 	end
       end
     end

@@ -73,4 +73,9 @@ class TestABNF < Test::Unit::TestCase
     End
   end
 
+  def test_too_complex
+    assert_raises(ABNF::TooComplex) { ABNF.regexp_tree(<<-End) }
+      s = "" | "a" s "b"
+    End
+  end
 end
