@@ -60,7 +60,7 @@ class Grammar
     def Elt.inherited(subclass)
       subclass.class_eval <<-End
 	def accept(v)
-	  v.visit#{subclass.name.sub(/.*::/, '')} self
+	  v.visit#{subclass.name.sub(/\AGrammar::/, '')} self
 	end
       End
     end
