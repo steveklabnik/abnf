@@ -62,7 +62,7 @@ class Module
   AbstractMethods = {}
 
   def define_abstract_method(name)
-    name = name.intern if String === name
+    name = name.to_s.intern unless Symbol === name
     AbstractMethods[self] ||= []
     AbstractMethods[self] << name
     self.class_eval {
