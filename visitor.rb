@@ -62,12 +62,10 @@ The definitions of C, D and E are same as follows without visitor.rb.
 
     If a block is given, it is called to generate a method name.
 
+    ((|visitor_class|)).non_redefined_visitor_methods is
+    defined.
+
 == generated element class
-
-=== constants
---- Visitor
-
-== Visitor class in generated element class
 
 === class methods
 --- non_redefined_visitor_methods
