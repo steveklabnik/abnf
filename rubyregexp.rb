@@ -19,7 +19,7 @@ class RubyRegexp
 
   def pretty_display(out=$>)
     PrettyPrint.format(out) {|pout|
-      pout.group(1, '/', '/x') {
+      pout.group(3, '%r{', '}x') {
 	pretty_format(pout)
       }
     }
@@ -28,7 +28,7 @@ class RubyRegexp
 
   def inspect
     PrettyPrint.singleline_format('') {|pout|
-      pout.group(1, '/', '/') {
+      pout.group(3, '%r{', '}') {
 	pretty_format(pout)
       }
     }
@@ -278,7 +278,7 @@ class RubyRegexp
       when ?\v; '\v'
       when ?\a; '\a'
       when ?\e; '\e'
-      when ?!, ?", ?%, ?&, ?', ?,, ?:, ?;, ?<, ?=, ?>, ?@, ?0..?9, ?A..?Z, ?_, ?`, ?a..?z, ?~
+      when ?!, ?", ?%, ?&, ?', ?,, ?:, ?;, ?<, ?=, ?>, ?/, ?0..?9, ?@, ?A..?Z, ?_, ?`, ?a..?z, ?~
         sprintf("%c", e)
       else
         sprintf("\\x%02x", e)
