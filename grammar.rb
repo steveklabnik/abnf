@@ -51,6 +51,7 @@ class Grammar
       c.con(*@elts)
     end
   end
+  EmptySequence = Con.new
 
   class Alt < Elt
     def initialize(*elts)
@@ -62,6 +63,7 @@ class Grammar
       c.alt(*@elts)
     end
   end
+  EmptySet = Alt.new
 
   class Rep < Elt
     def initialize(elt, min=0, max=nil, greedy=true)
@@ -157,7 +159,7 @@ class Grammar
     def con(*elts)
       result = []
       super.elts.each {|e|
-	if e.kind_of? Alt && e.elts.empty?
+	if e.kind_of?(Alt) && e.elts.empty?
 	  return e
         elsif e.kind_of? Con
 	  result.concat e.elts
@@ -165,7 +167,11 @@ class Grammar
 	  result << e
 	end
       }
-      Con.new(*result)
+      if result.length == 1
+        result.first
+      else
+	Con.new(*result)
+      end
     end
 
     def alt(*elts)
@@ -177,7 +183,11 @@ class Grammar
 	  result << e
 	end
       }
-      Alt.new(*result)
+      if result.length == 1
+        result.first
+      else
+	Alt.new(*result)
+      end
     end
   end
 end
