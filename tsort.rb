@@ -6,6 +6,16 @@ strongly connected components.
 
 == Example
 
+  require 'tsort'
+
+  class Hash
+    include TSort
+    alias tsort_each_node each_key
+    def tsort_each_child(node, &block)
+      fetch(node).each(&block)
+    end
+  end
+
   {1=>[2, 3], 2=>[3], 3=>[], 4=>[]}.tsort
   #=> [3, 2, 1, 4]
 
@@ -18,10 +28,10 @@ strongly connected components.
 
 TSort is designed to be able to use with any object which can be interpreted
 as a graph.  TSort requires two methods to interpret a object as a graph:
-tsort_each_node and tsort_descendants.
+tsort_each_node and tsort_each_child.
 
-* tsort_each_node is used to iterate all nodes over a graph.
-* tsort_descendants is used to find all descendant nodes of a given node.
+* tsort_each_node is used to iterate for all nodes over a graph.
+* tsort_each_child is used to iterate for child nodes of a given node.
 
 The equality of nodes are defined by eql? and hash.
 TSort uses Hash internally.
@@ -29,11 +39,10 @@ TSort uses Hash internally.
 === methods
 --- tsort 
     returns a topologically sorted array of nodes.
-    The array is sorted as a leaf to a root:
-    I.e. first element of the array has no descendants and
-    there is no node which has last element of the array as a descendant.
+    The array is sorted from children to parents:
+    I.e. the first element has no child and the last node has no parent.
 
-    If there is a cycle, the exception TSort::Cyclic is raised.
+    If there is a cycle, TSort::Cyclic is raised.
 
 --- tsort_each {|node| ...}
     is the iterator version of tsort method.
@@ -41,11 +50,12 @@ TSort uses Hash internally.
     modification of obj during the iteration may cause unexpected result.
 
     tsort_each returns nil.
+    If there is a cycle, TSort::Cyclic is raised.
 
 --- strongly_connected_components
     returns strongly connected components as an array of array of nodes.
-    The array is sorted as leafs to roots.
-    Each elements of the array represents strongly connected component.
+    The array is sorted as children to parents.
+    Each elements of the array represents a strongly connected component.
 
 --- each_strongly_connected_component {|nodes| ...}
     is the iterator version of strongly_connected_components method.
@@ -55,44 +65,25 @@ TSort uses Hash internally.
 
     each_strongly_connected_component returns nil.
 
+--- each_strongly_connected_component_from(node) {|nodes| ...}
+    iterates over strongly connected component in the subgraph reachable from 
+    ((|node|)).
+
+    Return value is unspecified.
+
+    each_strongly_connected_component_from doesn't call tsort_each_node.
+
 --- tsort_each_node
     should be implemented by a extended class.
 
---- tsort_descendants(node)
+--- tsort_each_child(node) {|child| ... }
     should be implemented by a extended class.
-
-== Hash
-Hash is extended by TSort.
-
-Hash is interpreted as graph as follows:
-* key is interpreted as node.
-* value should be Array and it is interpreted as descendants of corresponding key.
-
---- tsort_each_node {|node| ... }
-    is an alias to each_key.
-
---- tsort_descendants(node)
-    is an alias to fetch.
-
-== Array
-Array is extended by TSort.
-
-Array is interpreted as graph as follows:
-* index is interpreted as node.
-* array element should be Array and it is interpreted as descendants of
-  corresponding index.
-
---- tsort_each_node {|node| ... }
-    is an alias to each_index.
-
---- tsort_descendants(node)
-    is an alias to fetch.
 
 == Bugs
 
-* (('tsort.rb')) is wrong name.
-  Although (('strongly_connected_components.rb')) is correct name,
-  it's too long.
+* (('tsort.rb')) is wrong name because essence of this library is
+  Tarjan's algorithm for strongly connected components.
+  Although (('strongly_connected_components.rb')) is correct but too long,
 
 == References
 R. E. Tarjan, 
@@ -128,7 +119,7 @@ module TSort
 
   def tsort_each
     each_strongly_connected_component {|component|
-      if component.length == 1
+      if component.size == 1
         yield component.first
       else
         raise Cyclic.new "topological sort failed: #{component.inspect}"
@@ -145,69 +136,67 @@ module TSort
   def each_strongly_connected_component(&block)
     id_map = {}
     stack = []
-    id_map.default = -1
     tsort_each_node {|node|
-      if id_map[node] == -1
-        strongly_connected_components_rec(node, id_map, stack, &block)
+      unless id_map.include? node
+        each_strongly_connected_component_from(node, id_map, stack, &block)
       end
     }
     nil
   end
 
-  def strongly_connected_components_rec(node, id_map, stack, &block)
-    reachable_minimum_id = node_id = id_map[node] = id_map.size;
-    stack_length = stack.length;
+  def each_strongly_connected_component_from(node, id_map={}, stack=[], &block)
+    minimum_id = node_id = id_map[node] = id_map.size
+    stack_length = stack.length
     stack << node
 
-    tsort_descendants(node).each {|next_node|
-      next_id = id_map[next_node]
-      if next_id != -1
-        if !next_id.nil? && next_id < reachable_minimum_id
-          reachable_minimum_id = next_id
-        end
+    tsort_each_child(node) {|child|
+      if id_map.include? child
+	child_id = id_map[child]
+	minimum_id = child_id if child_id && child_id < minimum_id
       else
         sub_minimum_id =
-	  strongly_connected_components_rec(next_node, id_map, stack, &block)
-        if sub_minimum_id < reachable_minimum_id
-          reachable_minimum_id = sub_minimum_id
-        end
+	  each_strongly_connected_component_from(child, id_map, stack, &block)
+	minimum_id = sub_minimum_id if sub_minimum_id < minimum_id
       end
     }
 
-    if node_id == reachable_minimum_id
+    if node_id == minimum_id
       component = stack.slice!(stack_length .. -1)
+      component.each {|n| id_map[n] = nil}
       yield component
-      component.each {|n|
-        id_map[n] = nil
-      }
     end
-    return reachable_minimum_id;
+
+    minimum_id
   end
 
   def tsort_each_node
     raise NotImplementedError.new
   end
 
-  def tsort_descendants(k, &block)
+  def tsort_each_child(node)
     raise NotImplementedError.new
   end
-end
-
-class Hash
-  include TSort
-  alias tsort_each_node each_key
-  alias tsort_descendants fetch
-end
-
-class Array
-  include TSort
-  alias tsort_each_node each_index
-  alias tsort_descendants fetch
 end
 
 if __FILE__ == $0
   require 'runit/testcase'
   require 'runit/cui/testrunner'
+
+  class Hash
+    include TSort
+    alias tsort_each_node each_key
+    def tsort_each_child(node, &block)
+      fetch(node).each(&block)
+    end
+  end
+
+  class Array
+    include TSort
+    alias tsort_each_node each_index
+    def tsort_each_child(node, &block)
+      fetch(node).each(&block)
+    end
+  end
 
   class TSortTest < RUNIT::TestCase
     def test_dag
@@ -221,6 +210,16 @@ if __FILE__ == $0
       assert_equal([[4], [2, 3], [1]],
         h.strongly_connected_components.map {|nodes| nodes.sort})
       assert_exception(TSort::Cyclic) { h.tsort }
+    end
+
+    def test_array
+      a = [[1], [0], [0], [2]]
+      assert_equal([[0, 1], [2], [3]],
+        a.strongly_connected_components.map {|nodes| nodes.sort})
+
+      a = [[], [0]]
+      assert_equal([[0], [1]],
+        a.strongly_connected_components.map {|nodes| nodes.sort})
     end
   end
 
