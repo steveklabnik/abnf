@@ -12,7 +12,7 @@
     hex4    = 1*4HEXDIG
   End
 
-  Note that this is wrong because it doesn't match to "::13.1.68.3".
+Note that this is wrong because it doesn't match to "::13.1.68.3".
 
   # URI-reference [RFC2396]
   p %r{\A#{ABNF.regexp <<'End'}\z}o
@@ -43,10 +43,10 @@ require 'tsort'
 
 class ABNF
   def ABNF.regexp(desc, name=nil)
-    Regexp.compile ABNF.regexp_object(desc, name).to_s
+    Regexp.compile ABNF.ruby_regexp(desc, name).to_s
   end
 
-  def ABNF.regexp_object(desc, name=nil)
+  def ABNF.ruby_regexp(desc, name=nil)
     grammar = ABNF.parse(desc)
     raise StandardError.new("no rule defined") if grammar.names.empty?
     name ||= grammar.names.first
@@ -129,7 +129,7 @@ if $0 == __FILE__
   End
 
   # URI-reference [RFC2396]
-  ABNF.regexp_object(<<-'End').pretty_display
+  ABNF.ruby_regexp(<<-'End').pretty_display
         URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
         absoluteURI   = scheme ":" ( hier_part | opaque_part )
         relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
