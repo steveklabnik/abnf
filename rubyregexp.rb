@@ -148,11 +148,13 @@ class RubyRegexp
   def nongreedy_closure() RubyRegexp.rep(self, 0, nil, false) end
   def nongreedy_positive_closure() RubyRegexp.rep(self, 1, nil, false) end
   def nongreedy_optional() RubyRegexp.rep(self, 0, 1, false) end
-  def nongreedy_repeat(m, n=m) RubyRegexp.rep(self, m, n, false) end
-  def closure() RubyRegexp.rep(self, 0, nil) end
-  def positive_closure() RubyRegexp.rep(self, 1, nil) end
-  def optional() RubyRegexp.rep(self, 0, 1) end
-  def repeat(m, n=m, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
+  def nongreedy_ntimes(m, n=m) RubyRegexp.rep(self, m, n, false) end
+  def nongreedy_rep(m=0, n=nil) RubyRegexp.rep(self, m, n, false) end
+  def closure(greedy=true) RubyRegexp.rep(self, 0, nil, greedy) end
+  def positive_closure(greedy=true) RubyRegexp.rep(self, 1, nil, greedy) end
+  def optional(greedy=true) RubyRegexp.rep(self, 0, 1, greedy) end
+  def ntimes(m, n=m, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
+  def rep(m=0, n=nil, greedy=true) RubyRegexp.rep(self, m, n, greedy) end
 
   def RubyRegexp.rep(r, m=0, n=nil, greedy=true)
     return EmptySequence if m == 0 && n == 0

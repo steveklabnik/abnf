@@ -348,6 +348,6 @@ class ABNF
 
   class Alt; def regexp() RubyRegexp.alt(*@elts.map {|e| e.regexp}) end end
   class Seq; def regexp() RubyRegexp.seq(*@elts.map {|e| e.regexp}) end end
-  class Rep; def regexp() @elt.regexp.repeat(min, max, greedy) end end
+  class Rep; def regexp() @elt.regexp.rep(min, max, greedy) end end
   class Term; def regexp() RubyRegexp.charclass(@natset) end end
 end
