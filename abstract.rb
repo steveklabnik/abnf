@@ -1,12 +1,11 @@
 =begin
 = abstract.rb implements abstract methods for Ruby.
 
-In general, abstract methods are not required for dynamically typed
-object oriented languages such as Ruby.
-It is because existence of a method is checked at run time.
+This library provides a way to define/test abstract mehods.
+It is intended to be used by an unit test.
 
-This library makes it possible to check existence of a method with unit test
-before run time.
+In general, abstract methods are not required for dynamically typed
+object oriented languages such as Ruby, though.
 
 == Example
   require 'abstract'
@@ -29,14 +28,18 @@ before run time.
     require 'runit/cui/testrunner'
 
     class AbstractTest < RUNIT::TestCase
-      def test_abstract
-	assert_equal([], B.abstract_methods) #=> success
-	assert_equal([], C.abstract_methods) #=> fail
+      def test_abstract_methods
+        assert_equal([], B.abstract_methods) #=> success
+        assert_equal([], C.abstract_methods) #=> fail
       end
     end
 
     RUNIT::CUI::TestRunner.run(AbstractTest.suite)
   end
+
+== Class Methods
+--- Module.abstract_modules
+    returns an array of abstract modules/classes.
 
 == Methods
 --- Module#define_abstract_method(name)
@@ -78,6 +81,14 @@ class Module
 
   def abstract?
     !abstract_methods.empty?
+  end
+
+  def Module.abstract_modules
+    result = []
+    ObjectSpace.each_object(Module) {|mod|
+      result << mod if mod.abstract?
+    }
+    result
   end
 end
 
