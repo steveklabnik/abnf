@@ -41,4 +41,30 @@ class TestABNF < Test::Unit::TestCase
     End
   end
 
+  def test_unreachable_1
+    assert_equal([:s, :n], ABNF.parse(<<-'End').delete_unreachable([:s]).names)
+      s = "a" | n
+      n = "b"
+      m = "c"
+    End
+  end
+
+  def test_useless_1
+    assert_equal([:s, :n], ABNF.parse(<<-'End').delete_useless(:s).names)
+      s = "a" | n
+      n = "b"
+      m = "c"
+    End
+  end
+
+  def test_useless_2
+    assert_equal([:s, :n], ABNF.parse(<<-'End').delete_useless(:s).names)
+      s = "a" | n | x
+      n = "b"
+      x = y
+      y = x
+      m = "c"
+    End
+  end
+
 end
