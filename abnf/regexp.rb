@@ -73,7 +73,7 @@ class ABNF
 	# X = b a*
 	rules.each {|n, e|
 	  r = rs[n]
-	  if r & LeftRecursion != 0 && r & ~(NonRecursion|JustRecursion|LeftRecursion) == 0
+	  if r & LeftRecursion != 0 && r & ~(NonRecursion|JustRecursion|LeftRecursion|SelfRecursion) == 0
 	    e = e.remove_left_recursion(n)
 	    resolved_rules[n] = e
 	    rules.delete n
@@ -89,7 +89,7 @@ class ABNF
 	# X = a* b
 	rules.each {|n, e|
 	  r = rs[n]
-	  if r & RightRecursion != 0 && r & ~(NonRecursion|JustRecursion|RightRecursion) == 0
+	  if r & RightRecursion != 0 && r & ~(NonRecursion|JustRecursion|RightRecursion|SelfRecursion) == 0
 	    e = e.remove_right_recursion(n)
 	    resolved_rules[n] = e
 	    rules.delete n
