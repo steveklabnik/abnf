@@ -84,7 +84,7 @@ class RubyRegexp
 	@rs.each_with_index {|r, i|
 	  unless i == 0
 	    out.text '|'
-	    out.breakable ''
+	    out.group {out.breakable ''}
 	  end
 	  r.parenthesize(Alt).pretty_format(out)
 	}
@@ -130,7 +130,7 @@ class RubyRegexp
     def pretty_format(out)
       @rs.each_with_index {|r, i|
 	unless i == 0
-	  out.breakable ''
+	  out.group {out.breakable ''}
 	end
 	r.parenthesize(Seq).pretty_format(out)
       }
