@@ -12,7 +12,6 @@ strongly connected components.
   {1=>[2], 2=>[3, 4], 3=>[2], 4=>[]}.strongly_connected_components
   #=> [[4], [2, 3], [1]]
 
-
 == TSort module
 TSort implements topological sorting using Tarjan's algorithm for
 strongly connected components.
@@ -152,7 +151,7 @@ module TSort
   end
 
   def strongly_connected_components_rec(node, id_map, stack, &block)
-    reachable_minimum_id = current_id = id_map[node] = id_map.size;
+    reachable_minimum_id = node_id = id_map[node] = id_map.size;
     stack_length = stack.length;
     stack << node
 
@@ -171,7 +170,7 @@ module TSort
       end
     }
 
-    if current_id == reachable_minimum_id
+    if node_id == reachable_minimum_id
       component = stack.slice!(stack_length .. -1)
       yield component
       component.each {|n|
