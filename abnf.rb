@@ -61,9 +61,15 @@ class ABNF
   def initialize
     @names = []
     @rules = {}
+    @start = nil
+  end
+
+  def start_symbol=(name)
+    @start = name
   end
 
   def start_symbol
+    return @start if @start
     raise StandardError.new("no symbol defined") if @names.empty?
     @names.first
   end
