@@ -48,9 +48,7 @@ class ABNF
 
   def ABNF.ruby_regexp(desc, name=nil)
     grammar = ABNF.parse(desc)
-    raise StandardError.new("no rule defined") if grammar.names.empty?
-    name ||= grammar.names.first
-    grammar.regexp(name)
+    grammar.ruby_regexp(name || grammar.start_symbol)
   end
 
   def ABNF.parse(desc, dont_merge_core_rules=false)
@@ -66,6 +64,7 @@ class ABNF
   end
 
   def start_symbol
+    raise StandardError.new("no symbol defined") if @names.empty?
     @names.first
   end
 
