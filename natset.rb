@@ -83,6 +83,47 @@ class NatSet
     @es.hash
   end
 
+  def complement
+    if @es.empty?
+      type.all
+    elsif @es[0] == 0
+      type.new(*@es[1..-1])
+    else
+      type.new(0, *@es)
+    end
+  end
+  alias -@ complement
+
+  def union(other)
+    other.union_natset(self)
+  end
+  alias + union
+  alias | union
+
+  def intersection(other)
+    other.intersection_natset(self)
+  end
+  alias & intersection
+
+  def setdiff(other)
+    other.setdiff_natset(self)
+  end
+  alias - setdiff
+
+  def union_natset(natset)
+    merge(natset) {|a, b| a || b}
+  end
+
+  def intersection_natset(natset)
+    merge(natset) {|a, b| a && b}
+  end
+
+  def setdiff_natset(natset) # natset - self
+    # Since double dispatch *inverses* a receiver and an argument, 
+    # condition should be inversed.
+    merge(natset) {|a, b| !a && b}
+  end
+
   def merge(other)
     es1 = @es.dup
     es2 = other.es.dup
@@ -124,27 +165,6 @@ class NatSet
     type.new(*es0)
   end
 
-  def +(other)
-    merge(other) {|a, b| a || b}
-  end
-
-  def -(other)
-    merge(other) {|a, b| a && !b}
-  end
-
-  def -@
-    if @es.empty?
-      type.all
-    elsif @es[0] == 0
-      type.new(*@es[1..-1])
-    else
-      type.new(0, *@es)
-    end
-  end
-
-  def &(other)
-    merge(other) {|a, b| a && b}
-  end
 end
 
 if __FILE__ == $0
@@ -170,7 +190,7 @@ if __FILE__ == $0
       assert_equal(nil, NatSet.new(1, 3).singleton?)
     end
 
-    def test_negate
+    def test_complement
       assert_equal(NatSet.empty, -NatSet.all)
       assert_equal(NatSet.all, -NatSet.empty)
       assert_equal(NatSet.new(1, 2), -NatSet.new(0, 1, 2))
@@ -193,7 +213,7 @@ if __FILE__ == $0
       assert_equal(NatSet.create(0), NatSet.create(0, 2) & NatSet.create(0, 1))
     end
 
-    def test_minus
+    def test_setdiff
       assert_equal(NatSet.empty, NatSet.empty - NatSet.empty)
       assert_equal(NatSet.empty, NatSet.empty - NatSet.all)
       assert_equal(NatSet.all, NatSet.all - NatSet.empty)
