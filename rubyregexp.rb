@@ -319,7 +319,7 @@ class RubyRegexp
     end
 
     def pretty_format(out)
-      out.group(1, "(#@mark", ')') {
+      out.group(1 + @mark.length, "(#@mark", ')') {
 	@r.pretty_format(out)
       }
     end
