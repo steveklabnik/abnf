@@ -83,7 +83,7 @@ class NatSet
     @es.hash
   end
 
-  def complement
+  def unaryminus
     if @es.empty?
       type.all
     elsif @es[0] == 0
@@ -92,33 +92,33 @@ class NatSet
       type.new(0, *@es)
     end
   end
-  alias -@ complement
+  alias -@ unaryminus
 
-  def union(other)
-    other.union_natset(self)
+  def plus(other)
+    other.plus_natset(self)
   end
-  alias + union
-  alias | union
+  alias + plus
+  alias | plus
 
-  def intersection(other)
-    other.intersection_natset(self)
-  end
-  alias & intersection
-
-  def setdiff(other)
-    other.setdiff_natset(self)
-  end
-  alias - setdiff
-
-  def union_natset(natset)
+  def plus_natset(natset)
     merge(natset) {|a, b| a || b}
   end
 
-  def intersection_natset(natset)
+  def ampersand(other)
+    other.ampersand_natset(self)
+  end
+  alias & ampersand
+
+  def minus(other)
+    other.minus_natset(self)
+  end
+  alias - minus
+
+  def ampersand_natset(natset)
     merge(natset) {|a, b| a && b}
   end
 
-  def setdiff_natset(natset) # natset - self
+  def minus_natset(natset) # natset - self
     # Since double dispatch *inverses* a receiver and an argument, 
     # condition should be inversed.
     merge(natset) {|a, b| !a && b}
@@ -190,14 +190,14 @@ if __FILE__ == $0
       assert_equal(nil, NatSet.new(1, 3).singleton?)
     end
 
-    def test_complement
+    def test_unaryminus
       assert_equal(NatSet.empty, -NatSet.all)
       assert_equal(NatSet.all, -NatSet.empty)
       assert_equal(NatSet.new(1, 2), -NatSet.new(0, 1, 2))
       assert_equal(NatSet.new(0, 1, 2), -NatSet.new(1, 2))
     end
 
-    def test_union
+    def test_plus
       assert_equal(NatSet.empty, NatSet.empty + NatSet.empty)
       assert_equal(NatSet.all, NatSet.empty + NatSet.all)
       assert_equal(NatSet.all, NatSet.all + NatSet.empty)
@@ -205,7 +205,7 @@ if __FILE__ == $0
       assert_equal(NatSet.create(0..2), NatSet.create(0, 2) + NatSet.create(0, 1))
     end
 
-    def test_intersection
+    def test_ampersand
       assert_equal(NatSet.empty, NatSet.empty & NatSet.empty)
       assert_equal(NatSet.empty, NatSet.empty & NatSet.all)
       assert_equal(NatSet.empty, NatSet.all & NatSet.empty)
@@ -213,7 +213,7 @@ if __FILE__ == $0
       assert_equal(NatSet.create(0), NatSet.create(0, 2) & NatSet.create(0, 1))
     end
 
-    def test_setdiff
+    def test_minus
       assert_equal(NatSet.empty, NatSet.empty - NatSet.empty)
       assert_equal(NatSet.empty, NatSet.empty - NatSet.all)
       assert_equal(NatSet.all, NatSet.all - NatSet.empty)
