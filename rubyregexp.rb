@@ -27,11 +27,14 @@ class RubyRegexp
   end
 
   def inspect
-    PrettyPrint.singleline_format('') {|out|
-      out.group(3, '%r{', '}') {
-	pretty_format(out)
-      }
-    }
+    r = PrettyPrint.singleline_format('') {|out|
+	  pretty_format(out)
+	}
+    if %r{/} =~ r
+      "%r{#{r}}"
+    else
+      "/#{r}/"
+    end
   end
 
   def to_s
