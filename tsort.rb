@@ -70,7 +70,7 @@ Hash is interpreted as graph as follows:
 
 As a result, tsort_each_node and tsort_descendants is defined as follows:
 * tsort_each_node is defined as alias to each_key.
-* tsort_descendants is defined as alias to [].
+* tsort_descendants is defined as alias to fetch.
 
 == Array
 Array is extended by TSort.
@@ -82,7 +82,7 @@ Array is interpreted as graph as follows:
 
 tsort_each_node and tsort_descendants is defined as follows:
 * tsort_each_node is defined as alias to each_index.
-* tsort_descendants is defined as alias to [].
+* tsort_descendants is defined as alias to fetch.
 
 == Bugs
 
@@ -192,11 +192,11 @@ end
 class Hash
   include TSort
   alias tsort_each_node each_key
-  alias tsort_descendants []
+  alias tsort_descendants fetch
 end
 
 class Array
   include TSort
   alias tsort_each_node each_index
-  alias tsort_descendants []
+  alias tsort_descendants fetch
 end
