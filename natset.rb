@@ -93,9 +93,9 @@ class NatSet
 
   def complement
     if @es.empty?
-      type.whole
+      self.class.whole
     elsif @es[0] == 0
-      type.new(*@es[1..-1])
+      self.class.new(*@es[1..-1])
     else
       self.class.new(0, *@es)
     end
