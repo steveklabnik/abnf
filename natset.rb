@@ -15,6 +15,8 @@ NatSet represents a set of naturals - non-negative integers.
 --- singleton?
 --- self == other
 --- self === other
+--- eql?(other)
+--- hash
 --- ~self
 --- self + other
 --- self - other
@@ -26,8 +28,8 @@ NatSet represents a set of naturals - non-negative integers.
 --- min
 --- max
 
---- eql?(other)
---- hash
+--- each_range {|range| ... }
+
 =end
 
 class NatSet
@@ -221,6 +223,9 @@ class NatSet
     result
   end
 
+  # min returns a minimum element of the set.
+  # It returns nil if the set has no minimum element,
+  # i.e. the set has no element.
   def min
     if @es.empty?
       nil
@@ -229,6 +234,9 @@ class NatSet
     end
   end
 
+  # max returns a maximum element of the set.
+  # It returns nil if the set has no maximum element,
+  # i.e. the set is open or has no element.
   def max
     if @es.empty? || open?
       nil
@@ -237,20 +245,34 @@ class NatSet
     end
   end
 
+  # each_range iterates on continuous ranges of the set from smallest to largest.
+  # For each range, it yields Range object which represent it.
+  # For last range in open set, the end of the object is -1.
+  # For all Range objects it yields, exclude_end? is true.
+  def each_range
+    (0...@es.length).step(2) {|i|
+      e1 = @es[i]
+      if i+1 == @es.length
+        yield e1..-1
+      else
+        e2 = @es[i+1]
+        yield e1..(e2-1)
+      end
+    }
+  end
+
   def pretty_print(pp)
     pp.object_group(self) {
       pp.text ':'
-      (0...@es.length).step(2) {|i|
+      each_range {|r|
 	pp.breakable
-        e1 = @es[i]
-        e2 = @es[i+1]
-	if e2 == nil
-	  pp.text "#{e1}..inf"
-	elsif e1 == e2 - 1
-	  pp.text e1.to_s
-	else
-	  pp.text "#{e1}..#{e2-1}"
-	end
+        if r.end == -1
+          pp.text "#{r.begin}..inf"
+        elsif r.begin == r.end
+          pp.text r.begin.to_s
+        else
+          pp.text "#{r.begin}..#{r.end}"
+        end
       }
     }
   end
@@ -369,6 +391,15 @@ if __FILE__ == $0
       assert_equal(nil, NatSet.new().max)
       assert_equal(10, NatSet.new(1..10).max)
       assert_equal(nil, NatSet.new(1..-1).max)
+    end
+
+    def test_each_range
+      rs = []; NatSet.new() .each_range {|r| rs << r}; assert_equal([], rs)
+      rs = []; NatSet.new(0).each_range {|r| rs << r}; assert_equal([0..0], rs)
+      rs = []; NatSet.new(1).each_range {|r| rs << r}; assert_equal([1..1], rs)
+      rs = []; NatSet.new(1..3).each_range {|r| rs << r}; assert_equal([1..3], rs)
+      rs = []; NatSet.new(1...3).each_range {|r| rs << r}; assert_equal([1..2], rs)
+      rs = []; NatSet.new(1..-1).each_range {|r| rs << r}; assert_equal([1..-1], rs)
     end
   end
 end
