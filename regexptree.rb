@@ -26,8 +26,10 @@ It can be converted to Regexp.
 #--- RegexpTree.backref(n)
 
 == methods
---- regexp
+--- regexp(anchored=false)
     convert to Regexp.
+
+    If ((|anchored|)) is true, the Regexp is anchored by (({\A})) and (({\z})).
 --- to_s
     convert to String.
 --- empty_set?
@@ -92,11 +94,20 @@ class RegexpTree
     end
   end
 
-  def regexp
+  def regexp(anchored=false)
+    if case_insensitive?
+      r = downcase
+      opt = Regexp::IGNORECASE
+    else
+      r = self
+      opt = 0
+    end
+    r = RegexpTree.seq(RegexpTree.strbeg, r, RegexpTree.strend) if anchored
     Regexp.compile(
       PrettyPrint.singleline_format('') {|out|
-	pretty_format(out)
-      })
+	r.pretty_format(out)
+      },
+      opt)
   end
 
   def to_s
