@@ -21,8 +21,8 @@ class Grammar
   def tsort_each_node(&block)
     @rules.each_key(&block)
   end
-  def tsort_each_child(name, &block)
-    @rules[name].each_ref(&block)
+  def tsort_each_child(name)
+    @rules[name].each_ref {|e| yield e.name}
   end
 
   class Elt
@@ -51,6 +51,10 @@ class Grammar
 
     def simplify
       self.accept(Simplify.new)
+    end
+
+    def each_ref(&block)
+      self.accept(TraverseRef.new(&block))
     end
 
     def Elt.inherited(subclass)
@@ -156,11 +160,35 @@ class Grammar
   end
 
 ### Visitor
+  class Traverse
+    def visitTerm(e) end
+    def visitCon(e) e.elts.each {|d| d.accept(self)} end
+    def visitAlt(e) e.elts.each {|d| d.accept(self)} end
+    def visitRep(e) e.elt.accept(self) end
+    def visitRef(e) end
+    def visitBackrefDef(e) e.elt.accept(self) end
+    def visitBackref(e) end
+    def visitLookAhead(e) e.elt.accept(self) end
+    def visitNoBacktrack(e) e.elt.accept(self) end
+    def visitRegexpOption(e) e.elt.accept(self) end
+  end
+
+  class TraverseRef < Traverse
+    def initialize(&block)
+      @block = block
+    end
+
+    def visitRef(e)
+      @block.call(e)
+    end
+  end
+
   class Copy
     def visitTerm(e) Term.new(e.natset) end
     def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
     def visitAlt(e) Alt.new(*e.elts.map {|d| d.accept(self)}) end
     def visitRep(e) Rep.new(e.elt.accept(self), e.min, e.max, e.greedy) end
+    def visitRef(e) Ref.new(e.name) end
     def visitBackrefDef(e) BackrefDef.new(e.name, e.elt.accept(self)) end
     def visitBackref(e) Backref.new(e.name) end
     def visitLookAhead(e) LookAhead.new(e.elt.accept(self), e.neg) end
@@ -207,4 +235,29 @@ class Grammar
       end
     end
   end
+end
+
+if __FILE__ == $0
+  require 'runit/testcase'
+  require 'runit/cui/testrunner'
+
+  class EltTest < RUNIT::TestCase
+    def test_each_ref
+      a = Grammar::Term.new(NatSet.new(1)) *
+	  Grammar::Ref.new(:a) *
+	  Grammar::Term.new(NatSet.new(2)) *
+	  Grammar::Ref.new(:b) *
+	  Grammar::Term.new(NatSet.new(3)) *
+	  Grammar::Ref.new(:c) *
+	  Grammar::Term.new(NatSet.new(4)) *
+	  Grammar::Ref.new(:d) *
+	  Grammar::Term.new(NatSet.new(5)) *
+	  Grammar::Ref.new(:e)
+      result = []
+      a.each_ref {|e| result << e.name}
+      assert_equal([:a, :b, :c, :d, :e], result)
+    end
+  end
+
+  RUNIT::CUI::TestRunner.run(EltTest.suite)
 end
