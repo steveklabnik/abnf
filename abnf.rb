@@ -39,6 +39,12 @@ Note that this is wrong because it doesn't match to "::13.1.68.3".
     converts ((|abnf_description|)) to a ((<RegexpTree|URL:regexptree.html>)) object corresponding with
     ((|start_symbol|)).
 
+=== constants
+
+--- TooComplex
+    is a subclass of StandardError.
+    It is raised when ABNF grammar is too complex to convert to Regexp.
+
 = Note
 
 * Wrong ABNF description produces wrong regexp.
