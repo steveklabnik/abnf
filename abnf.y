@@ -2,7 +2,8 @@
 class ABNFParser
 rule
   rulelist	:		{ result = Grammar.new }
-          	| rulelist rule	{ result[val[1][0]] = val[1][1].simplify }
+          	| rulelist rule	{ @names << val[1][0]
+		                  result[val[1][0]] = val[1][1].simplify }
 
   rule	: defname assign alt	{ result = [val[0], val[2]] }
 
@@ -32,15 +33,18 @@ end
 require 'grammar'
 
 module ABNF
-  def ABNF.regexp(desc, name) # xxx make name optional
-    ABNFParser.new.parse(desc).to_regexp(name)
+  def ABNF.regexp(desc, name=nil)
+    parser = ABNFParser.new
+    parser.parse(desc).regexp(name || parser.names.first)
   end
 
 ---- inner
 
   def initialize(parent=CoreRules)
     @parent = parent
+    @names = []
   end
+  attr_reader :names
 
   def parse(input)
     @input = input
