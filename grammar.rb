@@ -85,6 +85,9 @@ class Grammar
     @rules.each_key(&block)
   end
   def tsort_each_child(name)
+    unless @rules.include? name
+      raise StandardError.new "grammar symbol undefined: #{name}"
+    end
     @rules.fetch(name).each_ruleref {|e| yield e.name}
   end
 
