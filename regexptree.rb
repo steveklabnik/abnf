@@ -1,39 +1,56 @@
 =begin
 = RegexpTree
+
+RegexpTree represents regular expression.
+It can be converted to Regexp.
+
 == class methods
 --- RegexpTree.str(string)
+    returns an instance of RegexpTree which only matches ((|string|))
 --- RegexpTree.alt(*regexp_trees)
+    returns an instance of RegexpTree which is alternation of ((|regexp_trees|)).
 --- RegexpTree.seq(*regexp_trees)
+    returns an instance of RegexpTree which is concatination of ((|regexp_trees|)).
 --- RegexpTree.rep(regexp_tree, min=0, max=nil, greedy=true)
+    returns an instance of RegexpTree which is reptation of ((|regexp_tree|)).
 --- RegexpTree.charclass(natset)
---- RegexpTree.linebeg
---- RegexpTree.lineend
---- RegexpTree.strbeg
---- RegexpTree.strend
---- RegexpTree.strlineend
---- RegexpTree.word_boundary
---- RegexpTree.non_word_boundary
---- RegexpTree.previous_match
---- RegexpTree.backref(n)
+    returns an instance of RegexpTree which matches characters in ((|natset|)).
+#--- RegexpTree.linebeg
+#--- RegexpTree.lineend
+#--- RegexpTree.strbeg
+#--- RegexpTree.strend
+#--- RegexpTree.strlineend
+#--- RegexpTree.word_boundary
+#--- RegexpTree.non_word_boundary
+#--- RegexpTree.previous_match
+#--- RegexpTree.backref(n)
 
 == methods
 --- regexp
+    convert to Regexp.
 --- to_s
+    convert to String.
 --- empty_set?
+    returns true iff self never matches. 
 --- empty_sequence?
+    returns true iff self only matches empty string.
 --- self | other
+    returns alternation of ((|self|)) and ((|other|)).
 --- self + other
+    returns concatination of ((|self|)) and ((|other|)).
 --- self * n
+    returns ((|n|)) times repetation of ((|self|)).
 --- rep(min=0, max=nil, greedy=true)
---- closure(greedy=true)
---- positive_closure(greedy=true)
---- optional(greedy=true)
---- ntimes(min, max=min, greedy=true)
---- nongreedy_rep(min=0, max=nil)
---- nongreedy_closure
---- nongreedy_positive_closure
---- nongreedy_optional
---- nongreedy_ntimes(min, max=min)
+    returns ((|min|)) to ((|max|)) times repetation of ((|self|)).
+#--- closure(greedy=true)
+#--- positive_closure(greedy=true)
+#--- optional(greedy=true)
+#--- ntimes(min, max=min, greedy=true)
+#--- nongreedy_rep(min=0, max=nil)
+#--- nongreedy_closure
+#--- nongreedy_positive_closure
+#--- nongreedy_optional
+#--- nongreedy_ntimes(min, max=min)
 =end
 
 require 'prettyprint'
