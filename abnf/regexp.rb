@@ -31,15 +31,19 @@ class ABNF
       updated = true
       while updated
 	updated = false
+	ns.reject! {|n| !rules.include?(n)}
+
 	rs = {}
-	rules.each {|n, e|
+	ns.reverse_each {|n|
+	  e = rules[n]
 	  rs[n] = e.recursion(ns, n)
 	  if rs[n] & OtherRecursion != 0
 	    raise StandardError.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
 	  end
 	}
 
-	rules.each {|n, e|
+	ns.reverse_each {|n|
+	  e = rules[n]
 	  r = rs[n]
 	  if r & SelfRecursion == 0
 	    resolved_rules[n] = e
@@ -55,7 +59,8 @@ class ABNF
 	# Y = X | b
 	# => 
 	# Y = Y | a | b
-	rules.each {|n, e|
+	ns.reverse_each {|n|
+	  e = rules[n]
 	  r = rs[n]
 	  if r & JustRecursion != 0 && r & ~(NonRecursion|JustRecursion) == 0
 	    e = e.remove_just_recursion(n)
@@ -71,7 +76,8 @@ class ABNF
 	# X = X a | b
 	# =>
 	# X = b a*
-	rules.each {|n, e|
+	ns.reverse_each {|n|
+	  e = rules[n]
 	  r = rs[n]
 	  if r & LeftRecursion != 0 && r & ~(NonRecursion|JustRecursion|LeftRecursion|SelfRecursion) == 0
 	    e = e.remove_left_recursion(n)
@@ -87,7 +93,8 @@ class ABNF
 	# X = a X | b
 	# =>
 	# X = a* b
-	rules.each {|n, e|
+	ns.reverse_each {|n|
+	  e = rules[n]
 	  r = rs[n]
 	  if r & RightRecursion != 0 && r & ~(NonRecursion|JustRecursion|RightRecursion|SelfRecursion) == 0
 	    e = e.remove_right_recursion(n)
