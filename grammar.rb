@@ -31,7 +31,7 @@ class Grammar
       # More work (survey) is needed.
       #
       # X = a X | b | X c
-      # =>
+      #  =>
       # X = a* b c*
       if Alt === e
         left = []
@@ -42,10 +42,10 @@ class Grammar
             if branch.elts.empty?
               middle << branch
             else
-              if Ref === branch.elts.first && branch.elts.first.name == n
-                right << Con.new(*branch.es[1..-1])
-              elsif Ref === branch.elts.last && branch.elts.last.name == n
-                left << Con.new(*branch.es[0...-1])
+              if RuleRef === branch.elts.first && branch.elts.first.name == n
+                right << Con.new(*branch.elts[1..-1])
+              elsif RuleRef === branch.elts.last && branch.elts.last.name == n
+                left << Con.new(*branch.elts[0...-1])
               else
                 middle << branch
               end
@@ -54,20 +54,16 @@ class Grammar
             middle << branch
           end
         }
-        es = []
-        es << Alt.new(*left).rep unless left.empty?
-        es << Alt.new(*middle)
-        es << Alt.new(*right).rep unless right.empty?
-        e = Con.new(*es)
+        e = Con.new(Alt.new(*left).rep, Alt.new(*middle), Alt.new(*right).rep)
       end
 
-      e.each_ref {|n2|
+      e.each_ruleref {|n2|
         if n == n2
 	  raise StandardError.new "too complex to convert to regexp: #{n}"
 	end
       }
 
-      env[n] = e.accept(SubstRef.new(env))
+      env[n] = e.accept(SubstRuleRef.new(env))
     }
     r = env[name].simplify
     r.accept(ScanBackref.new(env = {}))
@@ -79,7 +75,7 @@ class Grammar
     @rules.each_key(&block)
   end
   def tsort_each_child(name)
-    @rules[name].each_ref {|e| yield e.name}
+    @rules[name].each_ruleref {|e| yield e.name}
   end
 
 ### Abstract Class
@@ -112,8 +108,8 @@ class Grammar
       self.accept(Simplify.new)
     end
 
-    def each_ref(&block)
-      self.accept(TraverseRef.new(&block))
+    def each_ruleref(&block)
+      self.accept(TraverseRuleRef.new(&block))
     end
   end
 
@@ -154,7 +150,7 @@ class Grammar
   end
 
 ### Rule Reference
-  class Ref < Elt
+  class RuleRef < Elt
     def initialize(name)
       @name = name
     end
@@ -217,7 +213,7 @@ class Grammar
     def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
     def visitAlt(e) Alt.new(*e.elts.map {|d| d.accept(self)}) end
     def visitRep(e) Rep.new(e.elt.accept(self), e.min, e.max, e.greedy) end
-    def visitRef(e) Ref.new(e.name) end
+    def visitRuleRef(e) RuleRef.new(e.name) end
     def visitBackrefDef(e) BackrefDef.new(e.name, e.elt.accept(self)) end
     def visitBackref(e) Backref.new(e.name) end
     def visitLookAhead(e) LookAhead.new(e.elt.accept(self), e.neg) end
@@ -225,12 +221,12 @@ class Grammar
     def visitRegexpOption(e) RegexpOption.new(e.elt.accept(self), *e.opts) end
   end
 
-  class SubstRef < Copy
+  class SubstRuleRef < Copy
     def initialize(env)
       @env = env
     end
 
-    def visitRef(e)
+    def visitRuleRef(e)
       if @env.include? e.name
         @env[e.name]
       else
@@ -295,7 +291,7 @@ class Grammar
     def visitCon(e) e.elts.each {|d| d.accept(self)} end
     def visitAlt(e) e.elts.each {|d| d.accept(self)} end
     def visitRep(e) e.elt.accept(self) end
-    def visitRef(e) end
+    def visitRuleRef(e) end
     def visitBackrefDef(e) e.elt.accept(self) end
     def visitBackref(e) end
     def visitLookAhead(e) e.elt.accept(self) end
@@ -303,12 +299,12 @@ class Grammar
     def visitRegexpOption(e) e.elt.accept(self) end
   end
 
-  class TraverseRef < Traverse
+  class TraverseRuleRef < Traverse
     def initialize(&block)
       @block = block
     end
 
-    def visitRef(e)
+    def visitRuleRef(e)
       @block.call(e)
     end
   end
@@ -432,7 +428,7 @@ class Grammar
       end
     end
 
-    def visitRef(e)
+    def visitRuleRef(e)
       raise StandardError "cannot convert rule reference to regexp: #{e.name}"
     end
 
@@ -477,23 +473,33 @@ if __FILE__ == $0
   require 'runit/testcase'
   require 'runit/cui/testrunner'
 
-  class EltTest < RUNIT::TestCase
-    def test_each_ref
+  class GrammarTest < RUNIT::TestCase
+    def test_each_ruleref
       a = Grammar::Term.new(NatSet.new(1)) *
-	  Grammar::Ref.new(:a) *
+	  Grammar::RuleRef.new(:a) *
 	  Grammar::Term.new(NatSet.new(2)) *
-	  Grammar::Ref.new(:b) *
+	  Grammar::RuleRef.new(:b) *
 	  Grammar::Term.new(NatSet.new(3)) *
-	  Grammar::Ref.new(:c) *
+	  Grammar::RuleRef.new(:c) *
 	  Grammar::Term.new(NatSet.new(4)) *
-	  Grammar::Ref.new(:d) *
+	  Grammar::RuleRef.new(:d) *
 	  Grammar::Term.new(NatSet.new(5)) *
-	  Grammar::Ref.new(:e)
+	  Grammar::RuleRef.new(:e)
       result = []
-      a.each_ref {|e| result << e.name}
+      a.each_ruleref {|e| result << e.name}
       assert_equal([:a, :b, :c, :d, :e], result)
+    end
+
+    def test_astar
+      g = Grammar.new
+       g[:a] = Grammar::Alt.new(
+         Grammar::EmptySequence,
+	 Grammar::Con.new(
+	   Grammar::Term.new(NatSet.create(?a)),
+	   Grammar::RuleRef.new(:a)))
+       assert_equal("(?:a*)", g.regexp(:a))
     end
   end
 
-  RUNIT::CUI::TestRunner.run(EltTest.suite)
+  RUNIT::CUI::TestRunner.run(GrammarTest.suite)
 end
