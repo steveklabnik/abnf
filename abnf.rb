@@ -64,7 +64,10 @@ class ABNF
     @names = []
     @rules = {}
   end
-  attr_reader :names
+
+  def names
+    @names.dup
+  end
 
   def merge(g)
     g.each {|name, rhs|
@@ -113,7 +116,7 @@ class ABNF
       }
     }
     @rules = rules
-    @names = @names.reject {|name| !@rules.include?(name)}
+    @names.reject! {|name| !@rules.include?(name)}
     self
   end
 
@@ -173,7 +176,7 @@ class ABNF
     #xxx: raise if some of start symbol becomes empty set?
 
     @rules = rules
-    @names = @names.reject {|name| !@rules.include?(name)}
+    @names.reject! {|name| !@rules.include?(name)}
     self
   end
 
