@@ -113,7 +113,7 @@ class ABNF
       }
     }
     @rules = rules
-    @names.reject! {|name| !@rules.include?(name)}
+    @names = @names.reject {|name| !@rules.include?(name)}
     self
   end
 
@@ -173,7 +173,7 @@ class ABNF
     #xxx: raise if some of start symbol becomes empty set?
 
     @rules = rules
-    @names.reject! {|name| !@rules.include?(name)}
+    @names = @names.reject {|name| !@rules.include?(name)}
     self
   end
 
