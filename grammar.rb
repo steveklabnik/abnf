@@ -359,7 +359,7 @@ class Grammar
     end
 
     None = NatSet.empty
-    Any = NatSet.all
+    Any = NatSet.whole
     NL = NatSet.create(?\n)
     NonNL = ~NL
     Word = NatSet.create(?0..?9, ?A..?Z, ?_, ?a..?z)

@@ -5,12 +5,12 @@ NatSet represents a set of naturals - non-negative integers.
 
 == class methods
 --- NatSet.empty
---- NatSet.all
+--- NatSet.whole
 --- NatSet.create(integer_or_range, ...)
 
 == methods
 --- empty?
---- all?
+--- whole?
 --- open?
 --- singleton?
 --- self == other
@@ -28,7 +28,7 @@ class NatSet
     self.new
   end
 
-  def NatSet.all
+  def NatSet.whole
     self.new(0)
   end
 
@@ -65,7 +65,7 @@ class NatSet
     @es.empty?
   end
 
-  def all?
+  def whole?
     @es == [0]
   end
 
@@ -93,7 +93,7 @@ class NatSet
 
   def tilde
     if @es.empty?
-      type.all
+      type.whole
     elsif @es[0] == 0
       type.new(*@es[1..-1])
     else
@@ -109,6 +109,8 @@ class NatSet
   alias | plus
 
   def plus_natset(natset)
+    return self if natset.empty? || self.whole?
+    return natset if self.empty? || natset.whole?
     merge(natset) {|a, b| a || b}
   end
 
@@ -118,6 +120,8 @@ class NatSet
   alias & ampersand
 
   def ampersand_natset(natset)
+    return self if self.empty? || natset.whole?
+    return natset if natset.empty? || self.whole?
     merge(natset) {|a, b| a && b}
   end
 
@@ -129,6 +133,9 @@ class NatSet
   def minus_natset(natset) # natset - self
     # Since double dispatch *inverses* a receiver and an argument, 
     # condition should be inversed.
+    return natset if self.empty? || natset.empty?
+    return NatSet.empty if self.whole?
+    return ~self if natset.whole?
     merge(natset) {|a, b| !a && b}
   end
 
@@ -184,13 +191,13 @@ if __FILE__ == $0
       assert(NatSet.empty.empty?)
     end
 
-    def test_all
-      assert(NatSet.all.all?)
+    def test_whole
+      assert(NatSet.whole.whole?)
     end
 
     def test_open
       assert(!NatSet.empty.open?)
-      assert(NatSet.all.open?)
+      assert(NatSet.whole.open?)
     end
 
     def test_singleton
@@ -199,33 +206,33 @@ if __FILE__ == $0
     end
 
     def test_tilde
-      assert_equal(NatSet.empty, ~NatSet.all)
-      assert_equal(NatSet.all, ~NatSet.empty)
+      assert_equal(NatSet.empty, ~NatSet.whole)
+      assert_equal(NatSet.whole, ~NatSet.empty)
       assert_equal(NatSet.new(1, 2), ~NatSet.new(0, 1, 2))
       assert_equal(NatSet.new(0, 1, 2), ~NatSet.new(1, 2))
     end
 
     def test_plus
       assert_equal(NatSet.empty, NatSet.empty + NatSet.empty)
-      assert_equal(NatSet.all, NatSet.empty + NatSet.all)
-      assert_equal(NatSet.all, NatSet.all + NatSet.empty)
-      assert_equal(NatSet.all, NatSet.all + NatSet.all)
+      assert_equal(NatSet.whole, NatSet.empty + NatSet.whole)
+      assert_equal(NatSet.whole, NatSet.whole + NatSet.empty)
+      assert_equal(NatSet.whole, NatSet.whole + NatSet.whole)
       assert_equal(NatSet.create(0..2), NatSet.create(0, 2) + NatSet.create(0, 1))
     end
 
     def test_ampersand
       assert_equal(NatSet.empty, NatSet.empty & NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.empty & NatSet.all)
-      assert_equal(NatSet.empty, NatSet.all & NatSet.empty)
-      assert_equal(NatSet.all, NatSet.all & NatSet.all)
+      assert_equal(NatSet.empty, NatSet.empty & NatSet.whole)
+      assert_equal(NatSet.empty, NatSet.whole & NatSet.empty)
+      assert_equal(NatSet.whole, NatSet.whole & NatSet.whole)
       assert_equal(NatSet.create(0), NatSet.create(0, 2) & NatSet.create(0, 1))
     end
 
     def test_minus
       assert_equal(NatSet.empty, NatSet.empty - NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.empty - NatSet.all)
-      assert_equal(NatSet.all, NatSet.all - NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.all - NatSet.all)
+      assert_equal(NatSet.empty, NatSet.empty - NatSet.whole)
+      assert_equal(NatSet.whole, NatSet.whole - NatSet.empty)
+      assert_equal(NatSet.empty, NatSet.whole - NatSet.whole)
       assert_equal(NatSet.create(2), NatSet.create(0, 2) - NatSet.create(0, 1))
     end
 
