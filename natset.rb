@@ -187,10 +187,9 @@ class NatSet
 end
 
 if __FILE__ == $0
-  require 'runit/testcase'
-  require 'runit/cui/testrunner'
+  require 'test/unit'
 
-  class NatSetTest < RUNIT::TestCase
+  class NatSetTest < Test::Unit::TestCase
     def test_empty
       assert(NatSet.empty.empty?)
     end
@@ -250,11 +249,9 @@ if __FILE__ == $0
       assert_equal([1, 2, 3, 4, 5, 6], NatSet.new(1, 3, 5).es)
       assert_equal([1, 16], NatSet.new(5..15, 1..10).es)
       assert_equal([1, 16], NatSet.new(11..15, 1..10).es)
-      assert_exception(ArgumentError) {NatSet.new("a")}
-      assert_exception(ArgumentError) {NatSet.new("a".."b")}
+      assert_raises(ArgumentError) {NatSet.new("a")}
+      assert_raises(ArgumentError) {NatSet.new("a".."b")}
     end
 
   end
-
-  RUNIT::CUI::TestRunner.run(NatSetTest.suite)
 end
