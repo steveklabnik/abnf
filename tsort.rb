@@ -1,6 +1,15 @@
 =begin
 = tsort.rb
 
+== Example
+
+  {1=>[2, 3], 2=>[3], 3=>[], 4=>[]}.tsort
+  #=> [3, 2, 1, 4]
+
+  {1=>[2], 2=>[3, 4], 3=>[2], 4=>[]}.strongly_connected_components
+  #=> [[4], [2, 3], [1]]
+
+
 == TSort
 TSort implements topological sorting using Tarjan's algorithm for
 strongly connected components.
@@ -28,12 +37,18 @@ tsort_decendants is used to find all decendant nodes of a given node.
 
     tsort_each returns nil.
 
---- strongly_connected_components {|nodes| ...}
-    iterates over each strongly connected component.
-    ((|nodes|)) is an array of nodes which represents a strongly connected
-    component.
+--- strongly_connected_components
+    returns strongly connected components as an array of array of nodes.
+    The array is sorted as leafs to roots.
+    Each elements of the array represents strongly connected component.
 
-    strongly_connected_components returns nil.
+--- each_strongly_connected_component {|nodes| ...}
+    is the iterater version of strongly_connected_components method.
+    obj.each_strongly_connected_component is similar to
+    obj.strongly_connected_components.each but
+    modification of obj during the iteration may cause unexpected result.
+
+    each_strongly_connected_component returns nil.
 
 --- tsort_each_node
     should be implemented by a extended class.
@@ -57,7 +72,8 @@ Array is extended by TSort.
 
 Array is interpreted as graph as follows:
 * index is interpreted as node.
-* array element should be Array and it is interpreted as decendants of corresponding index.
+* array element should be Array and it is interpreted as decendants of
+  corresponding index.
 
 tsort_each_node and tsort_decendants is defined as follows:
 * tsort_each_node is defined as alias to each_index.
@@ -97,25 +113,29 @@ module TSort
 
   def tsort
     result = []
-    tsort_each {|component| result << component}
+    tsort_each {|element| result << element}
     result
   end
 
   def tsort_each
-    strongly_connected_components {|components|
-      if components.length == 1
-        yield components.first
+    each_strongly_connected_component {|component|
+      if component.length == 1
+        yield component.first
       else
-        raise Cyclic.new "topological sort failed: #{components.inspect}"
+        raise Cyclic.new "topological sort failed: #{component.inspect}"
       end
     }
   end
 
-  def strongly_connected_components(&block)
-    len = self.size
+  def strongly_connected_components
+    result = []
+    each_strongly_connected_component {|component| result << component}
+    result
+  end
+
+  def each_strongly_connected_component(&block)
     id_map = {}
     stack = []
-    result = []
     id_map.default = -1
     tsort_each_node {|node|
       if id_map[node] == -1
