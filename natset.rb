@@ -15,8 +15,6 @@ NatSet represents a set of naturals - non-negative integers.
 --- singleton?
 --- self == other
 --- self === other
---- eql?(other)
---- hash
 --- ~self
 --- self + other
 --- self - other
@@ -24,6 +22,12 @@ NatSet represents a set of naturals - non-negative integers.
 
 --- split_each(ns, ...) {|region, *nss| ... }
 --- split(ns, ...)
+
+--- min
+--- max
+
+--- eql?(other)
+--- hash
 =end
 
 class NatSet
@@ -214,6 +218,22 @@ class NatSet
     result
   end
 
+  def min
+    if @es.empty?
+      nil
+    else
+      @es[0]
+    end
+  end
+
+  def max
+    if @es.empty? || open?
+      nil
+    else
+      @es[-1] - 1
+    end
+  end
+
   def pretty_print(pp)
     pp.object_group(self) {
       pp.text ':'
@@ -333,6 +353,17 @@ if __FILE__ == $0
                     [NatSet.new(1..4, 21..30), ns[0]],
                     [NatSet.new(5..20), *ns]],
                    u.split(*ns))
+    end
+
+    def test_min
+      assert_equal(nil, NatSet.new().min)
+      assert_equal(1, NatSet.new(1..10).min)
+    end
+
+    def test_max
+      assert_equal(nil, NatSet.new().max)
+      assert_equal(10, NatSet.new(1..10).max)
+      assert_equal(nil, NatSet.new(1..-1).max)
     end
   end
 end
