@@ -1,3 +1,40 @@
+=begin
+= RegexpTree
+== class methods
+--- RegexpTree.str(string)
+--- RegexpTree.alt(*regexp_trees)
+--- RegexpTree.seq(*regexp_trees)
+--- RegexpTree.rep(regexp_tree, min=0, max=nil, greedy=true)
+--- RegexpTree.charclass(natset)
+--- RegexpTree.linebeg
+--- RegexpTree.lineend
+--- RegexpTree.strbeg
+--- RegexpTree.strend
+--- RegexpTree.strlineend
+--- RegexpTree.word_boundary
+--- RegexpTree.non_word_boundary
+--- RegexpTree.previous_match
+--- RegexpTree.backref(n)
+
+== methods
+--- regexp
+--- to_s
+--- empty_set?
+--- empty_sequence?
+--- self | other
+--- self + other
+--- rep(min=0, max=nil, greedy=true)
+--- closure(greedy=true)
+--- positive_closure(greedy=true)
+--- optional(greedy=true)
+--- ntimes(min, max=min, greedy=true)
+--- nongreedy_rep(min=0, max=nil)
+--- nongreedy_closure
+--- nongreedy_positive_closure
+--- nongreedy_optional
+--- nongreedy_ntimes(min, max=min)
+=end
+
 require 'prettyprint'
 require 'natset'
 
@@ -58,19 +95,26 @@ class RegexpTree
     }
   end
 
+  def empty_set?
+    false
+  end
+
+  def empty_sequence?
+    false
+  end
+
   def |(other)
     RegexpTree.alt(self, other)
   end
   def RegexpTree.alt(*rs)
     rs2 = []
     rs.each {|r|
-      if Alt === r
-	next if r.empty_set?
+      if r.empty_set?
+        next
+      elsif Alt === r
         rs2.concat r.rs
       elsif CharClass === r
-	if r.empty_set?
-	  next
-        elsif CharClass === rs2.last
+        if CharClass === rs2.last
 	  rs2[-1] = CharClass.new(rs2.last.natset + r.natset)
 	else
 	  rs2 << r
@@ -119,13 +163,11 @@ class RegexpTree
   def RegexpTree.seq(*rs)
     rs2 = []
     rs.each {|r|
-      if Seq === r
-	if r.empty_sequence?
-	  next
-	else
-	  rs2.concat r.rs
-	end
-      elsif (Alt === r || CharClass === r) && r.empty_set?
+      if r.empty_sequence?
+	next
+      elsif Seq === r
+	rs2.concat r.rs
+      elsif r.empty_set?
         return EmptySet
       else
         rs2 << r
@@ -174,8 +216,8 @@ class RegexpTree
   def RegexpTree.rep(r, m=0, n=nil, greedy=true)
     return EmptySequence if m == 0 && n == 0
     return r if m == 1 && n == 1
-    return EmptySequence if Seq === r && r.empty_sequence?
-    if (Alt === r || CharClass === r) && r.empty_set?
+    return EmptySequence if r.empty_sequence?
+    if r.empty_set?
       return m == 0 ? EmptySequence : EmptySet
     end
     Rep.new(r, m, n, greedy)
