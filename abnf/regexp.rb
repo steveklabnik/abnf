@@ -10,7 +10,8 @@ class ABNF
   # This conversion is *not* perfect.
   # It may fail even if possible.
   # More work (survey) is needed.
-  def regexp_tree(name=start_symbol)
+  def regexp_tree(name=nil)
+    name ||= start_symbol
     env = {}
     each_strongly_connected_component_from(name) {|ns|
       rules = {}

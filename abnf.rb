@@ -48,7 +48,7 @@ class ABNF
 
   def ABNF.regexp_tree(desc, name=nil)
     grammar = ABNF.parse(desc)
-    grammar.regexp_tree(name || grammar.start_symbol)
+    grammar.regexp_tree(name)
   end
 
   def ABNF.parse(desc, dont_merge_core_rules=false)
