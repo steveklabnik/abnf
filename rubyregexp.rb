@@ -43,9 +43,18 @@ class RubyRegexp
     end
   end
 
+  def regexp
+    Regexp.compile(
+      PrettyPrint.singleline_format('') {|out|
+	pretty_format(out)
+      })
+  end
+
   def to_s
     PrettyPrint.singleline_format('') {|out|
+      out.text '(?-mix:'
       pretty_format(out)
+      out.text ')'
     }
   end
 

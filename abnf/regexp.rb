@@ -3,7 +3,7 @@ require 'rubyregexp'
 
 class ABNF
   def regexp(name=start_symbol)
-    Regexp.compile ruby_regexp(name).to_s
+    ruby_regexp(name).regexp
   end
 
   # Convert a recursive rule to non-recursive rule if possible.

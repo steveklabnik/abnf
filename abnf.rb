@@ -43,7 +43,7 @@ require 'tsort'
 
 class ABNF
   def ABNF.regexp(desc, name=nil)
-    Regexp.compile ABNF.ruby_regexp(desc, name).to_s
+    ABNF.ruby_regexp(desc, name).regexp
   end
 
   def ABNF.ruby_regexp(desc, name=nil)
