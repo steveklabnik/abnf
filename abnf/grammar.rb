@@ -25,7 +25,7 @@ class ABNF
       when Integer
         rep(n, n)
       when Range
-        rep(n.first, n.last - (n.exclude_end? ? 0 : 1))
+        rep(n.first, n.last - (n.exclude_end? ? 1 : 0))
       else
         raise TypeError.new("Integer or Range expected: #{n}")
       end

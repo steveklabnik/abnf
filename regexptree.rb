@@ -23,6 +23,7 @@
 --- empty_sequence?
 --- self | other
 --- self + other
+--- self * n
 --- rep(min=0, max=nil, greedy=true)
 --- closure(greedy=true)
 --- positive_closure(greedy=true)
@@ -202,6 +203,16 @@ class RegexpTree
   end
   EmptySequence = Seq.new([])
 
+  def *(n)
+    case n
+    when Integer
+      RegexpTree.rep(self, n, n)
+    when Range
+      RegexpTree.rep(self, n.first, n.last - (n.exclude_end? ? 1 : 0))
+    else
+      raise TypeError.new("Integer or Range expected: #{n}")
+    end
+  end
   def nongreedy_closure() RegexpTree.rep(self, 0, nil, false) end
   def nongreedy_positive_closure() RegexpTree.rep(self, 1, nil, false) end
   def nongreedy_optional() RegexpTree.rep(self, 0, 1, false) end
