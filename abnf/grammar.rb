@@ -2,10 +2,12 @@ require 'natset'
 
 class ABNF
   class Elt
+    # A variable is assumed as not empty set. 
     def empty_set?
       false
     end
 
+    # A variable is assumed as not empty sequence. 
     def empty_sequence?
       false
     end
@@ -42,11 +44,11 @@ class ABNF
     def Alt.new(*elts)
       elts2 = []
       elts.each {|e|
-        if Alt === e
-	  next if e.empty_set?
+	if e.empty_set?
+	  next
+        elsif Alt === e
 	  elts2.concat e.elts
 	elsif Term === e
-	  next if e.empty_set?
 	  if Term === elts2.last
 	    elts2[-1] = Term.new(elts2.last.natset + e.natset)
 	  else
@@ -85,10 +87,11 @@ class ABNF
     def Seq.new(*elts)
       elts2 = []
       elts.each {|e|
-        if Seq === e
-	  next if e.empty_sequence?
+	if e.empty_sequence?
+	  next
+        elsif Seq === e
 	  elts2.concat e.elts
-	elsif (Alt === e || Term === e) && e.empty_set?
+	elsif e.empty_set?
 	  return EmptySet
 	else
 	  elts2 << e
@@ -123,8 +126,8 @@ class ABNF
     def Rep.new(elt, min=0, max=nil, greedy=true)
       return EmptySequence if min == 0 && max == 0
       return elt if min == 1 && max == 1
-      return EmptySequence if Seq === elt && elt.empty_sequence?
-      if (Alt === elt || Term === elt) && elt.empty_set?
+      return EmptySequence if elt.empty_sequence?
+      if elt.empty_set?
         return min == 0 ? EmptySequence : EmptySet
       end
       Rep._new(elt, min, max, greedy)
