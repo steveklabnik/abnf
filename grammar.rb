@@ -25,6 +25,10 @@ class Grammar
     @rules[name].each_ref {|e| yield e.name}
   end
 
+### Abstract Class
+  class Visitor
+  end
+
   class Elt
     def *(other)
       Con.new(self, other)
@@ -58,9 +62,15 @@ class Grammar
     end
 
     def Elt.inherited(subclass)
+      methodname = 'visit' + subclass.name.sub(/\AGrammar::/, '')
       subclass.class_eval <<-End
 	def accept(v)
-	  v.visit#{subclass.name.sub(/\AGrammar::/, '')} self
+	  v.#{methodname} self
+	end
+      End
+      Visitor.class_eval <<-End
+        def #{methodname}
+	  raise NotImplementedError.new
 	end
       End
     end
@@ -160,7 +170,7 @@ class Grammar
   end
 
 ### Visitor
-  class Traverse
+  class Traverse < Visitor
     def visitTerm(e) end
     def visitCon(e) e.elts.each {|d| d.accept(self)} end
     def visitAlt(e) e.elts.each {|d| d.accept(self)} end
@@ -183,7 +193,7 @@ class Grammar
     end
   end
 
-  class Copy
+  class Copy < Visitor
     def visitTerm(e) Term.new(e.natset) end
     def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
     def visitAlt(e) Alt.new(*e.elts.map {|d| d.accept(self)}) end
