@@ -173,6 +173,10 @@ class RegexpTree
       @rs.all? {|r| r.case_insensitive?}
     end
 
+    def multiline_insensitive?
+      @rs.all? {|r| r.multiline_insensitive?}
+    end
+
     def downcase
       Alt.new(@rs.map {|r| r.downcase})
     end
@@ -229,6 +233,10 @@ class RegexpTree
 
     def case_insensitive?
       @rs.all? {|r| r.case_insensitive?}
+    end
+
+    def multiline_insensitive?
+      @rs.all? {|r| r.multiline_insensitive?}
     end
 
     def downcase
@@ -289,6 +297,10 @@ class RegexpTree
 
     def case_insensitive?
       @r.case_insensitive?
+    end
+
+    def multiline_insensitive?
+      @r.multiline_insensitive?
     end
 
     def downcase
@@ -370,6 +382,10 @@ class RegexpTree
       up == low
     end
 
+    def multiline_insensitive?
+      @natset != NonNL
+    end
+
     def downcase
       up = @natset & UpAlpha
       up.es.map! {|ch| ch - ?A + ?a}
@@ -394,7 +410,7 @@ class RegexpTree
 	else
 	  if @natset.open?
 	    neg_mark = '^'
-	    es = (~@natset.natset).es
+	    es = (~@natset).es
 	  else
 	    neg_mark = ''
 	    es = @natset.es.dup
@@ -451,6 +467,10 @@ class RegexpTree
       true
     end
 
+    def multiline_insensitive?
+      true
+    end
+
     def downcase
       self
     end
@@ -473,7 +493,13 @@ class RegexpTree
     end
 
     def case_insensitive?
+      # xxx: if @mark contains "i"...
       @r.case_insensitive?
+    end
+
+    def multiline_insensitive?
+      # xxx: if @mark contains "m"...
+      @r.multiline_insensitive?
     end
 
     def downcase
