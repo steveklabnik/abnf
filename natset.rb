@@ -35,14 +35,22 @@ class NatSet
   def NatSet.create(*es)
     r = self.empty
     es.each {|e|
-      if Range === e
+      case e
+      when Range
+	unless Integer === e.begin
+	  raise ArgumentError.new "bad value for #{self}.create: #{e}"
+	end
 	if e.exclude_end?
 	  r += self.new(e.begin, e.end)
 	else
 	  r += self.new(e.begin, e.end+1)
 	end
-      else
+      when Integer
 	r += self.new(e, e+1)
+      when NatSet
+	r += e
+      else
+        raise ArgumentError.new "bad value for #{self}.create: #{e}"
       end
     }
     r
@@ -228,6 +236,11 @@ if __FILE__ == $0
       assert_equal([1, 4], NatSet.create(1, 3, 2).es)
       assert_equal([10, 21], NatSet.create(10..20).es)
       assert_equal([10, 20], NatSet.create(10...20).es)
+      assert_equal([1, 2, 3, 4, 5, 6], NatSet.create(1, 3, 5).es)
+      assert_equal([1, 16], NatSet.create(5..15, 1..10).es)
+      assert_equal([1, 16], NatSet.create(11..15, 1..10).es)
+      assert_exception(ArgumentError) {NatSet.create("a")}
+      assert_exception(ArgumentError) {NatSet.create("a".."b")}
     end
 
   end
