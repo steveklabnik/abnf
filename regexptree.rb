@@ -103,7 +103,7 @@ class RegexpTree
     PrettyPrint.singleline_format('') {|out|
       # x flag is not required because all whitespaces are escaped.
       if case_insensitive?
-	out.text '(?-m:'
+	out.text '(?i-m:'
 	downcase.pretty_format(out)
 	out.text ')'
       else
