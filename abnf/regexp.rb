@@ -20,11 +20,23 @@ class ABNF
 	updated = false
 	rs = {}
 	rules.each {|n, e|
-	  rs[n] = e.recursion(ns)
+	  rs[n] = e.recursion(ns, n)
 	  if rs[n] & OtherRecursion != 0
 	    raise StandardError.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
 	  end
 	}
+
+	rules.each {|n, e|
+	  r = rs[n]
+	  if r & SelfRecursion == 0
+	    resolved_rules[n] = e
+	    rules.delete n
+	    rules.each {|n2, e2| rules[n2] = e2.subst_var {|n3| n3 == n ? e : nil}}
+	    updated = true
+	    break
+	  end
+	}
+	next if updated
 
 	# X = Y | a
 	# Y = X | b
@@ -82,7 +94,7 @@ class ABNF
 
       if rules.length == 1
 	n, e = rules.shift
-	r = e.recursion(ns)
+	r = e.recursion(ns, n)
 	if r & OtherRecursion != 0
 	  raise StandardError.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
 	end
@@ -123,7 +135,8 @@ class ABNF
   JustRecursion = 2	# X = Y
   LeftRecursion = 4	# X = Y a
   RightRecursion = 8	# X = a Y
-  OtherRecursion = 16	# otherwise
+  SelfRecursion = 16	# Y is X in JustRecursion, LeftRecursion and RightRecursion
+  OtherRecursion = 32	# otherwise
 
   class Elt
     def remove_left_recursion(n)
@@ -138,8 +151,8 @@ class ABNF
   end
 
   class Alt
-    def recursion(syms)
-      @elts.inject(0) {|r, e| r | e.recursion(syms)}
+    def recursion(syms, lhs)
+      @elts.inject(0) {|r, e| r | e.recursion(syms, lhs)}
     end
 
     def remove_just_recursion(n)
@@ -183,23 +196,23 @@ class ABNF
   end
 
   class Seq
-    def recursion(syms)
+    def recursion(syms, lhs)
       case @elts.length
       when 0
         NonRecursion
       when 1
-        @elts.first.recursion(syms)  
+        @elts.first.recursion(syms, lhs)  
       else
 	(1...(@elts.length-1)).each {|i|
-	  return OtherRecursion if @elts[i].recursion(syms) != NonRecursion
+	  return OtherRecursion if @elts[i].recursion(syms, lhs) != NonRecursion
 	}
 
-        r_left = @elts.first.recursion(syms)
-	return OtherRecursion if r_left & ~(NonRecursion|JustRecursion|LeftRecursion) != 0
+        r_left = @elts.first.recursion(syms, lhs)
+	return OtherRecursion if r_left & ~(NonRecursion|JustRecursion|LeftRecursion|SelfRecursion) != 0
 	r_left = (r_left & ~JustRecursion) | LeftRecursion if r_left & JustRecursion != 0
 
-        r_right = @elts.last.recursion(syms)
-	return OtherRecursion if r_right & ~(NonRecursion|JustRecursion|RightRecursion) != 0
+        r_right = @elts.last.recursion(syms, lhs)
+	return OtherRecursion if r_right & ~(NonRecursion|JustRecursion|RightRecursion|SelfRecursion) != 0
 	r_right = (r_right & ~JustRecursion) | RightRecursion if r_right & JustRecursion != 0
 
 	if r_left == NonRecursion
@@ -274,8 +287,8 @@ class ABNF
   end
 
   class Rep
-    def recursion(syms)
-      @elt.recursion(syms) == NonRecursion ? NonRecursion : OtherRecursion
+    def recursion(syms, lhs)
+      @elt.recursion(syms, lhs) == NonRecursion ? NonRecursion : OtherRecursion
     end
 
     def remove_just_recursion(n)
@@ -293,7 +306,7 @@ class ABNF
   end
 
   class Term
-    def recursion(syms)
+    def recursion(syms, lhs)
       NonRecursion
     end
 
@@ -312,8 +325,10 @@ class ABNF
   end
 
   class Var
-    def recursion(syms)
-      if syms.include? self.name
+    def recursion(syms, lhs)
+      if lhs == self.name
+	JustRecursion | SelfRecursion
+      elsif syms.include? self.name
 	JustRecursion
       else
         NonRecursion
