@@ -7,12 +7,22 @@ class Grammar
     @rules = {}
   end
 
+  def import(g)
+    g.each {|name, rhs|
+      @rules[name] = rhs
+    }
+  end
+
   def [](name)
     @rules[name]
   end
 
   def []=(name, rhs)
     @rules[name] = rhs
+  end
+
+  def each(&block)
+    @rules.each(&block)
   end
 
   def regexp(name)
@@ -75,7 +85,7 @@ class Grammar
     @rules.each_key(&block)
   end
   def tsort_each_child(name)
-    @rules[name].each_ruleref {|e| yield e.name}
+    @rules.fetch(name).each_ruleref {|e| yield e.name}
   end
 
 ### Abstract Class

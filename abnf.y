@@ -1,7 +1,7 @@
 # RFC 2234
 class ABNFParser
 rule
-  rulelist	:		{ result = Grammar.new }
+  rulelist	:		{ result = Grammar.new; result.import(@parent) }
           	| rulelist rule	{ @names << val[1][0]
 		                  result[val[1][0]] = val[1][1].simplify }
 
@@ -41,7 +41,7 @@ module ABNF
 ---- inner
 
   def initialize(parent=CoreRules)
-    @parent = parent
+    @parent = parent || Grammar.new
     @names = []
   end
   attr_reader :names
