@@ -14,6 +14,6 @@ pp rt
 
 r = rt.regexp(true)
 
-100.times {|i|
+1000.times {|i|
   print "error: #{i}\n" unless (r !~ i.to_s) == (i%3 != 0)
 }
