@@ -73,28 +73,22 @@ class RegexpTree
   end
 
   def pretty_print(pp)
+    case_insensitive = case_insensitive?
     pp.group(3, '%r{', '}x') {
-      pretty_format(pp)
+      (case_insensitive ? self.downcase : self).pretty_format(pp)
     }
-  end
-
-  def pretty_display(output=$>)
-    PrettyPrint.format(output) {|out|
-      out.group(3, '%r{', '}x') {
-	pretty_format(out)
-      }
-    }
-    output << "\n"
+    pp.text 'i' if case_insensitive
   end
 
   def inspect
+    case_insensitive = case_insensitive? && "i"
     r = PrettyPrint.singleline_format('') {|out|
-	  pretty_format(out)
+	  (case_insensitive ? self.downcase : self).pretty_format(out)
 	}
     if %r{/} =~ r
-      "%r{#{r}}"
+      "%r{#{r}}#{case_insensitive}"
     else
-      "%r/#{r}/"
+      "%r/#{r}/#{case_insensitive}"
     end
   end
 
@@ -107,9 +101,16 @@ class RegexpTree
 
   def to_s
     PrettyPrint.singleline_format('') {|out|
-      out.text '(?-mi:' # x is not required because all whitespaces are escaped.
-      pretty_format(out)
-      out.text ')'
+      # x flag is not required because all whitespaces are escaped.
+      if case_insensitive?
+	out.text '(?-m:'
+	downcase.pretty_format(out)
+	out.text ')'
+      else
+	out.text '(?-mi:'
+	pretty_format(out)
+	out.text ')'
+      end
     }
   end
 
@@ -155,6 +156,14 @@ class RegexpTree
 
     def empty_set?
       @rs.empty?
+    end
+
+    def case_insensitive?
+      @rs.all? {|r| r.case_insensitive?}
+    end
+
+    def downcase
+      Alt.new(@rs.map {|r| r.downcase})
     end
 
     def pretty_format(out)
@@ -207,6 +216,14 @@ class RegexpTree
       @rs.empty?
     end
 
+    def case_insensitive?
+      @rs.all? {|r| r.case_insensitive?}
+    end
+
+    def downcase
+      Seq.new(@rs.map {|r| r.downcase})
+    end
+
     def pretty_format(out)
       out.group {
 	@rs.each_with_index {|r, i|
@@ -257,6 +274,14 @@ class RegexpTree
       @m = m
       @n = n
       @greedy = greedy
+    end
+
+    def case_insensitive?
+      @r.case_insensitive?
+    end
+
+    def downcase
+      Rep.new(@r.downcase, @m, @n, @greedy)
     end
 
     def pretty_format(out)
@@ -314,6 +339,9 @@ class RegexpTree
     Digit = NatSet.new(?0..?9)
     NonDigit = ~Digit
 
+    UpAlpha = NatSet.new(?A..?Z)
+    LowAlpha = NatSet.new(?a..?z)
+
     def initialize(natset)
       @natset = natset
     end
@@ -321,6 +349,20 @@ class RegexpTree
 
     def empty_set?
       @natset.empty?
+    end
+
+    def case_insensitive?
+      up = @natset & UpAlpha
+      low = @natset & LowAlpha
+      return false if up.es.length != low.es.length
+      up.es.map! {|ch| ch - ?A + ?a}
+      up == low
+    end
+
+    def downcase
+      up = @natset & UpAlpha
+      up.es.map! {|ch| ch - ?A + ?a}
+      CharClass.new((@natset - UpAlpha) | up)
     end
 
     def pretty_format(out)
@@ -394,6 +436,14 @@ class RegexpTree
       @str = str
     end
 
+    def case_insensitive?
+      true
+    end
+
+    def downcase
+      self
+    end
+
     def pretty_format(out)
       out.text @str
     end
@@ -409,6 +459,14 @@ class RegexpTree
     def initialize(r, mark='?:')
       @mark = mark
       @r = r
+    end
+
+    def case_insensitive?
+      @r.case_insensitive?
+    end
+
+    def downcase
+      Paren.new(@r.downcase, @mark)
     end
 
     def pretty_format(out)
