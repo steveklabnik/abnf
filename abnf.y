@@ -550,4 +550,13 @@ p %r{\A#{ABNF.regexp <<'End'
 End
 }\z}o
 
+== ABNF class
+
+=== class methods
+
+--- regexp(abnf_description[, start_symbol])
+    converts ((|abnf_description|)) to a regular expression corresponding with ((|start_symbol|)).
+
+    If ((|start_symbol|)) is not specified, first symbol in ((|abnf_description|)) is used.
+
 =end
