@@ -6,7 +6,7 @@ Then the parsed grammar is transformed to recursion free.
 Although the transformation is impossible in general, 
 the library transform left and right recursion.
 The recursion free grammar can be printed as Regexp literal
-which is suitable in Ruby source code.
+which is suitable in Ruby script.
 The literal is pretty readable because parentheses are minimized and
 properly indented by the Wadler's pretty printing algebra.
 It is also possible to use the Regexp just in place.
