@@ -97,7 +97,7 @@ class NatSet
     elsif @es[0] == 0
       type.new(*@es[1..-1])
     else
-      type.new(0, *@es)
+      self.class.new(0, *@es)
     end
   end
   alias ~ complement
@@ -177,7 +177,7 @@ class NatSet
     if bool0 != yield(bool1, bool2)
       es0 << s
     end
-    type.new(*es0)
+    self.class.new(*es0)
   end
 
 end
