@@ -17,7 +17,7 @@ NatSet represents a set of naturals - non-negative integers.
 --- self === other
 --- eql?(other)
 --- hash
---- -self
+--- ~self
 --- self + other
 --- self - other
 --- self & other
@@ -83,7 +83,7 @@ class NatSet
     @es.hash
   end
 
-  def unaryminus
+  def tilde
     if @es.empty?
       type.all
     elsif @es[0] == 0
@@ -92,7 +92,7 @@ class NatSet
       type.new(0, *@es)
     end
   end
-  alias -@ unaryminus
+  alias ~ tilde
 
   def plus(other)
     other.plus_natset(self)
@@ -190,11 +190,11 @@ if __FILE__ == $0
       assert_equal(nil, NatSet.new(1, 3).singleton?)
     end
 
-    def test_unaryminus
-      assert_equal(NatSet.empty, -NatSet.all)
-      assert_equal(NatSet.all, -NatSet.empty)
-      assert_equal(NatSet.new(1, 2), -NatSet.new(0, 1, 2))
-      assert_equal(NatSet.new(0, 1, 2), -NatSet.new(1, 2))
+    def test_tilde
+      assert_equal(NatSet.empty, ~NatSet.all)
+      assert_equal(NatSet.all, ~NatSet.empty)
+      assert_equal(NatSet.new(1, 2), ~NatSet.new(0, 1, 2))
+      assert_equal(NatSet.new(0, 1, 2), ~NatSet.new(1, 2))
     end
 
     def test_plus
