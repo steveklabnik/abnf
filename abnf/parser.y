@@ -96,40 +96,40 @@ class ABNF
 	    case b
 	    when ?A..?Z
 	      b2 = b - ?A + ?a
-	      es << Term.new(NatSet.create(b, b2))
+	      es << Term.new(NatSet.new(b, b2))
 	    when ?a..?z
 	      b2 = b - ?a + ?A
-	      es << Term.new(NatSet.create(b, b2))
+	      es << Term.new(NatSet.new(b, b2))
 	    else
-	      es << Term.new(NatSet.create(b))
+	      es << Term.new(NatSet.new(b))
 	    end
 	  }
 	  yield :val, Seq.new(*es)
 	when /\A%b([01]+)-([01]+)/
 	  t = $&
-	  yield :val, Term.new(NatSet.create($1.to_i(2)..$2.to_i(2)))
+	  yield :val, Term.new(NatSet.new($1.to_i(2)..$2.to_i(2)))
 	when /\A%b[01]+(?:\.[01]+)*/
 	  es = []
 	  (t = $&).scan(/[0-1]+/) {|v|
-	    es << Term.new(NatSet.create(v.to_i(2)))
+	    es << Term.new(NatSet.new(v.to_i(2)))
 	  }
 	  yield :val, Seq.new(*es)
 	when /\A%d([0-9]+)-([0-9]+)/
 	  t = $&
-	  yield :val, Term.new(NatSet.create($1.to_i..$2.to_i))
+	  yield :val, Term.new(NatSet.new($1.to_i..$2.to_i))
 	when /\A%d[0-9]+(?:\.[0-9]+)*/
 	  es = []
 	  (t = $&).scan(/[0-9]+/) {|v|
-	    es << Term.new(NatSet.create(v.to_i))
+	    es << Term.new(NatSet.new(v.to_i))
 	  }
 	  yield :val, Seq.new(*es)
 	when /\A%x([0-9A-Fa-f]+)-([0-9A-Fa-f]+)/
 	  t = $&
-	  yield :val, Term.new(NatSet.create($1.hex..$2.hex))
+	  yield :val, Term.new(NatSet.new($1.hex..$2.hex))
 	when /\A%x[0-9A-Fa-f]+(?:\.[0-9A-Fa-f]+)*/
 	  es = []
 	  (t = $&).scan(/[0-9A-Fa-f]+/) {|v|
-	    es << Term.new(NatSet.create(v.hex))
+	    es << Term.new(NatSet.new(v.hex))
 	  }
 	  yield :val, Seq.new(*es)
 	when /\A<([\x20-\x3D\x3F-\x7E]*)>/

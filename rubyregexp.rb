@@ -217,14 +217,14 @@ class RubyRegexp
   end
   class CharClass < Elt
     None = NatSet.empty
-    Any = NatSet.whole
-    NL = NatSet.create(?\n)
+    Any = NatSet.universal
+    NL = NatSet.new(?\n)
     NonNL = ~NL
-    Word = NatSet.create(?0..?9, ?A..?Z, ?_, ?a..?z)
+    Word = NatSet.new(?0..?9, ?A..?Z, ?_, ?a..?z)
     NonWord = ~Word
-    Space = NatSet.create(?t, ?\n, ?\f, ?\r, ?\s)
+    Space = NatSet.new(?t, ?\n, ?\f, ?\r, ?\s)
     NonSpace = ~Space
-    Digit = NatSet.create(?0..?9)
+    Digit = NatSet.new(?0..?9)
     NonDigit = ~Digit
 
     def initialize(natset)
@@ -337,7 +337,7 @@ class RubyRegexp
   def RubyRegexp.str(str)
     ccs = []
     str.each_byte {|ch|
-      ccs << CharClass.new(NatSet.create(ch))
+      ccs << CharClass.new(NatSet.new(ch))
     }
     seq(*ccs)
   end

@@ -5,12 +5,12 @@ NatSet represents a set of naturals - non-negative integers.
 
 == class methods
 --- NatSet.empty
---- NatSet.whole
---- NatSet.create(integer_or_range, ...)
+--- NatSet.universal
+--- NatSet.new(integer_or_range, ...)
 
 == methods
 --- empty?
---- whole?
+--- universal?
 --- open?
 --- singleton?
 --- self == other
@@ -24,33 +24,37 @@ NatSet represents a set of naturals - non-negative integers.
 =end
 
 class NatSet
+  class << NatSet
+    alias _new new
+  end
+
   def NatSet.empty
-    self.new
+    self._new
   end
 
-  def NatSet.whole
-    self.new(0)
+  def NatSet.universal
+    self._new(0)
   end
 
-  def NatSet.create(*es)
+  def NatSet.new(*es)
     r = self.empty
     es.each {|e|
       case e
       when Range
 	unless Integer === e.begin
-	  raise ArgumentError.new("bad value for #{self}.create: #{e}")
+	  raise ArgumentError.new("bad value for #{self}.new: #{e}")
 	end
 	if e.exclude_end?
-	  r += self.new(e.begin, e.end)
+	  r += self._new(e.begin, e.end)
 	else
-	  r += self.new(e.begin, e.end+1)
+	  r += self._new(e.begin, e.end+1)
 	end
       when Integer
-	r += self.new(e, e+1)
+	r += self._new(e, e+1)
       when NatSet
 	r += e
       else
-        raise ArgumentError.new("bad value for #{self}.create: #{e}")
+        raise ArgumentError.new("bad value for #{self}.new: #{e}")
       end
     }
     r
@@ -65,7 +69,7 @@ class NatSet
     @es.empty?
   end
 
-  def whole?
+  def universal?
     @es == [0]
   end
 
@@ -93,11 +97,11 @@ class NatSet
 
   def complement
     if @es.empty?
-      self.class.whole
+      self.class.universal
     elsif @es[0] == 0
-      self.class.new(*@es[1..-1])
+      self.class._new(*@es[1..-1])
     else
-      self.class.new(0, *@es)
+      self.class._new(0, *@es)
     end
   end
   alias ~ complement
@@ -109,8 +113,8 @@ class NatSet
   alias | union
 
   def union_natset(natset)
-    return self if natset.empty? || self.whole?
-    return natset if self.empty? || natset.whole?
+    return self if natset.empty? || self.universal?
+    return natset if self.empty? || natset.universal?
     merge(natset) {|a, b| a || b}
   end
 
@@ -120,8 +124,8 @@ class NatSet
   alias & intersect
 
   def intersect_natset(natset)
-    return self if self.empty? || natset.whole?
-    return natset if natset.empty? || self.whole?
+    return self if self.empty? || natset.universal?
+    return natset if natset.empty? || self.universal?
     merge(natset) {|a, b| a && b}
   end
 
@@ -134,8 +138,8 @@ class NatSet
     # Since double dispatch *inverses* a receiver and an argument, 
     # condition should be inversed.
     return natset if self.empty? || natset.empty?
-    return NatSet.empty if self.whole?
-    return ~self if natset.whole?
+    return NatSet.empty if self.universal?
+    return ~self if natset.universal?
     merge(natset) {|a, b| !a && b}
   end
 
@@ -177,7 +181,7 @@ class NatSet
     if bool0 != yield(bool1, bool2)
       es0 << s
     end
-    self.class.new(*es0)
+    self.class._new(*es0)
   end
 
 end
@@ -191,63 +195,63 @@ if __FILE__ == $0
       assert(NatSet.empty.empty?)
     end
 
-    def test_whole
-      assert(NatSet.whole.whole?)
+    def test_universal
+      assert(NatSet.universal.universal?)
     end
 
     def test_open
       assert(!NatSet.empty.open?)
-      assert(NatSet.whole.open?)
+      assert(NatSet.universal.open?)
     end
 
     def test_singleton
-      assert_equal(1, NatSet.new(1, 2).singleton?)
-      assert_equal(nil, NatSet.new(1, 3).singleton?)
+      assert_equal(1, NatSet._new(1, 2).singleton?)
+      assert_equal(nil, NatSet._new(1, 3).singleton?)
     end
 
     def test_complement
-      assert_equal(NatSet.empty, ~NatSet.whole)
-      assert_equal(NatSet.whole, ~NatSet.empty)
-      assert_equal(NatSet.new(1, 2), ~NatSet.new(0, 1, 2))
-      assert_equal(NatSet.new(0, 1, 2), ~NatSet.new(1, 2))
+      assert_equal(NatSet.empty, ~NatSet.universal)
+      assert_equal(NatSet.universal, ~NatSet.empty)
+      assert_equal(NatSet._new(1, 2), ~NatSet._new(0, 1, 2))
+      assert_equal(NatSet._new(0, 1, 2), ~NatSet._new(1, 2))
     end
 
     def test_union
       assert_equal(NatSet.empty, NatSet.empty + NatSet.empty)
-      assert_equal(NatSet.whole, NatSet.empty + NatSet.whole)
-      assert_equal(NatSet.whole, NatSet.whole + NatSet.empty)
-      assert_equal(NatSet.whole, NatSet.whole + NatSet.whole)
-      assert_equal(NatSet.create(0..2), NatSet.create(0, 2) + NatSet.create(0, 1))
+      assert_equal(NatSet.universal, NatSet.empty + NatSet.universal)
+      assert_equal(NatSet.universal, NatSet.universal + NatSet.empty)
+      assert_equal(NatSet.universal, NatSet.universal + NatSet.universal)
+      assert_equal(NatSet.new(0..2), NatSet.new(0, 2) + NatSet.new(0, 1))
     end
 
     def test_intersect
       assert_equal(NatSet.empty, NatSet.empty & NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.empty & NatSet.whole)
-      assert_equal(NatSet.empty, NatSet.whole & NatSet.empty)
-      assert_equal(NatSet.whole, NatSet.whole & NatSet.whole)
-      assert_equal(NatSet.create(0), NatSet.create(0, 2) & NatSet.create(0, 1))
+      assert_equal(NatSet.empty, NatSet.empty & NatSet.universal)
+      assert_equal(NatSet.empty, NatSet.universal & NatSet.empty)
+      assert_equal(NatSet.universal, NatSet.universal & NatSet.universal)
+      assert_equal(NatSet.new(0), NatSet.new(0, 2) & NatSet.new(0, 1))
     end
 
     def test_subtract
       assert_equal(NatSet.empty, NatSet.empty - NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.empty - NatSet.whole)
-      assert_equal(NatSet.whole, NatSet.whole - NatSet.empty)
-      assert_equal(NatSet.empty, NatSet.whole - NatSet.whole)
-      assert_equal(NatSet.create(2), NatSet.create(0, 2) - NatSet.create(0, 1))
+      assert_equal(NatSet.empty, NatSet.empty - NatSet.universal)
+      assert_equal(NatSet.universal, NatSet.universal - NatSet.empty)
+      assert_equal(NatSet.empty, NatSet.universal - NatSet.universal)
+      assert_equal(NatSet.new(2), NatSet.new(0, 2) - NatSet.new(0, 1))
     end
 
-    def test_create
-      assert_equal([1, 2], NatSet.create(1).es)
-      assert_equal([1, 3], NatSet.create(1, 2).es)
-      assert_equal([1, 4], NatSet.create(1, 2, 3).es)
-      assert_equal([1, 4], NatSet.create(1, 3, 2).es)
-      assert_equal([10, 21], NatSet.create(10..20).es)
-      assert_equal([10, 20], NatSet.create(10...20).es)
-      assert_equal([1, 2, 3, 4, 5, 6], NatSet.create(1, 3, 5).es)
-      assert_equal([1, 16], NatSet.create(5..15, 1..10).es)
-      assert_equal([1, 16], NatSet.create(11..15, 1..10).es)
-      assert_exception(ArgumentError) {NatSet.create("a")}
-      assert_exception(ArgumentError) {NatSet.create("a".."b")}
+    def test_new
+      assert_equal([1, 2], NatSet.new(1).es)
+      assert_equal([1, 3], NatSet.new(1, 2).es)
+      assert_equal([1, 4], NatSet.new(1, 2, 3).es)
+      assert_equal([1, 4], NatSet.new(1, 3, 2).es)
+      assert_equal([10, 21], NatSet.new(10..20).es)
+      assert_equal([10, 20], NatSet.new(10...20).es)
+      assert_equal([1, 2, 3, 4, 5, 6], NatSet.new(1, 3, 5).es)
+      assert_equal([1, 16], NatSet.new(5..15, 1..10).es)
+      assert_equal([1, 16], NatSet.new(11..15, 1..10).es)
+      assert_exception(ArgumentError) {NatSet.new("a")}
+      assert_exception(ArgumentError) {NatSet.new("a".."b")}
     end
 
   end
