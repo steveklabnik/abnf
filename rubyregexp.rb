@@ -55,10 +55,10 @@ class RubyRegexp
         rs2 << r
       end
     }
-    if rs2.length == 1
-      rs2.first
-    else
-      Alt.new(rs2)
+    case rs2.length
+    when 0; EmptySet
+    when 1; rs2.first
+    else; Alt.new(rs2)
     end
   end
   class Alt < RubyRegexp
@@ -104,10 +104,10 @@ class RubyRegexp
         rs2 << r
       end
     }
-    if rs2.length == 1
-      rs2.first
-    else
-      Seq.new(rs2)
+    case rs2.length
+    when 0; EmptySequence
+    when 1; rs2.first
+    else; Seq.new(rs2)
     end
   end
   class Seq < RubyRegexp
