@@ -1,9 +1,17 @@
 # RFC 2234
 class ABNFParser
 rule
-  rulelist	:
-          	| rulelist rule	{ @name ||= val[1][0]
-		                  @grammar[val[1][0]] = val[1][1].simplify }
+  rulelist	:		{ result = [] }
+          	| rulelist rule	{ 
+				  name = val[1][0]
+				  rhs = val[1][1].simplify
+				  if @grammar.include? name
+				    @grammar[name] += rhs
+				  else
+				    @grammar[name] = rhs
+				  end
+		                  result << name
+				}
 
   rule	: defname assign alt	{ result = [val[0], val[2]] }
 
@@ -37,18 +45,19 @@ module ABNF
     grammar = Grammar.new
     grammar.import(CoreRules)
     parser = ABNFParser.new(grammar)
-    parser.parse(desc)
-    name ||= parser.name
+    names = parser.parse(desc)
+    if names.empty?
+      raise StandardError.new "no rule defined"
+    end
+    name ||= names.first
     grammar.regexp(name)
   end
 
 ---- inner
 
   def initialize(grammar)
-    @name = nil
     @grammar = grammar
   end
-  attr_reader :name
 
   def parse(input)
     @input = input

@@ -21,6 +21,10 @@ class Grammar
     @rules[name] = rhs
   end
 
+  def include?(name)
+    @rules.include? name
+  end
+
   def each(&block)
     @rules.each(&block)
   end
