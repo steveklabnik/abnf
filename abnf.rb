@@ -33,25 +33,90 @@
     If ((|start_symbol|)) is not specified, first symbol in
     ((|abnf_description|)) is used.
 
+= Note
+
+* Wrong ABNF description produces wrong regexp.
+
 =end
 
-require 'abnf/corerules'
-require 'abnf/regexp'
+require 'tsort'
 
-module ABNF
+class ABNF
   def ABNF.regexp(desc, name=nil)
     Regexp.compile ABNF.regexp_object(desc, name).to_s
   end
 
   def ABNF.regexp_object(desc, name=nil)
-    grammar = Grammar.new
-    grammar.import(CoreRules)
-    first = Parser.new(grammar).parse(desc)
+    grammar = ABNF.parse(desc)
+    first = grammar.names.first
     raise StandardError.new("no rule defined") if first.nil?
     name ||= first
     grammar.regexp(name)
   end
+
+  def ABNF.parse(desc, import_core_rules=true)
+    grammar = ABNF.new
+    Parser.new(grammar).parse(desc)
+    grammar.import(CoreRules) if import_core_rules
+    grammar
+  end
+
+  def initialize
+    @names = []
+    @rules = {}
+  end
+  attr_reader :names
+
+  def import(g)
+    g.each {|name, rhs|
+      self.add(name, rhs)
+    }
+  end
+
+  def [](name)
+    @rules[name]
+  end
+
+  def []=(name, rhs)
+    @names << name unless @rules.include? name
+    @rules[name] = rhs
+  end
+
+  def add(name, rhs)
+    if @rules.include? name
+      @rules[name] |= rhs
+    else
+      @names << name
+      @rules[name] = rhs
+    end
+  end
+
+  def include?(name)
+    @rules.include? name
+  end
+
+  def each(&block)
+    @names.each {|name|
+      yield name, @rules[name]
+    }
+  end
+
+  include TSort
+  def tsort_each_node(&block)
+    @names.each(&block)
+  end
+  def tsort_each_child(name)
+    unless @rules.include? name
+      raise StandardError.new("grammar symbol undefined: #{name}")
+    end
+    @rules.fetch(name).each_var {|e| yield e}
+  end
 end
+
+require 'abnf/grammar'
+require 'abnf/parser'
+require 'abnf/corerules'
+require 'abnf/regexp'
 
 if $0 == __FILE__
   # IPv6 [RFC2373]

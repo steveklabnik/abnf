@@ -36,7 +36,7 @@ end
 
 require 'abnf/grammar'
 
-module ABNF
+class ABNF
 
 ---- inner
 
