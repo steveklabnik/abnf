@@ -222,7 +222,10 @@ if __FILE__ == $0
     end
 
     def test_create
-      assert_equal([10, 11], NatSet.create(10).es)
+      assert_equal([1, 2], NatSet.create(1).es)
+      assert_equal([1, 3], NatSet.create(1, 2).es)
+      assert_equal([1, 4], NatSet.create(1, 2, 3).es)
+      assert_equal([1, 4], NatSet.create(1, 3, 2).es)
       assert_equal([10, 21], NatSet.create(10..20).es)
       assert_equal([10, 20], NatSet.create(10...20).es)
     end
