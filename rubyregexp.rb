@@ -84,6 +84,7 @@ class RubyRegexp
       end
     end
   end
+  EmptySet = Alt.new([])
 
   def +(other)
     RubyRegexp.seq(self, other)
@@ -98,7 +99,7 @@ class RubyRegexp
 	  rs2.concat r.rs
 	end
       elsif (Alt === r || CharClass === r) && r.empty_set?
-        return r
+        return EmptySet
       else
         rs2 << r
       end
@@ -128,40 +129,78 @@ class RubyRegexp
       }
     end
   end
+  EmptySequence = Seq.new([])
 
-  def nongreedy_closure() Rep.new(self, '*?') end
-  def nongreedy_positive_closure() Rep.new(self, '+?') end
-  def nongreedy_optional() Rep.new(self, '??') end
-  def nongreedy_repeat(m, n=m) repeat(self, m, n, true) end
-  def closure() Rep.new(self, '*') end
-  def positive_closure() Rep.new(self, '+') end
-  def optional() Rep.new(self, '?') end
-  def repeat(m, n=m, nongreedy=false)
-    g = nongreedy ? '?' : ''
-    if m == n
-      Rep.new(self, "{#{m}}#{g}")
-    elsif n
-      Rep.new(self, "{#{m},#{n}}#{g}")
-    else
-      Rep.new(self, "{#{m},}#{g}")
-    end
-  end
-  def rep(mark='*') Rep.new(self, mark) end
+  def nongreedy_closure() Rep.create(self, 0, nil, false) end
+  def nongreedy_positive_closure() Rep.create(self, 1, nil, false) end
+  def nongreedy_optional() Rep.create(self, 0, 1, false) end
+  def nongreedy_repeat(m, n=m) Rep.create(self, m, n, false) end
+  def closure() Rep.create(self, 0, nil) end
+  def positive_closure() Rep.create(self, 1, nil) end
+  def optional() Rep.create(self, 0, 1) end
+  def repeat(m, n=m) Rep.create(self, m, n) end
   class Rep < RubyRegexp
-    def initialize(r, mark)
+    def Rep.create(r, m=0, n=nil, greedy=true)
+      return EmptySequence if m == 0 && n == 0
+      return r if m == 1 && n == 1
+      return EmptySequence if Seq === r && r.empty_sequence?
+      if (Alt === r || CharClass === r) && r.empty_set?
+	return m == 0 ? EmptySequence : EmptySet
+      end
+
+      Rep.new(r, m, n, greedy)
+    end
+
+    def initialize(r, m=0, n=nil, greedy=true)
       @r = r
-      @mark = mark
+      @m = m
+      @n = n
+      @greedy = greedy
     end
 
     def pretty_format(out)
       @r.parenthesize(Elt).pretty_format(out)
-      out.text @mark
+      case @m
+      when 0
+        case @n
+	when 0
+	  out.text '{0}'
+	when 1
+	  out.text '?'
+	when nil
+	  out.text '*'
+	else
+	  out.text "{#{@m},#{@n}}"
+	end
+      when 1
+        case @n
+	when 1
+	when nil
+	  out.text '+'
+	else
+	  out.text "{#{@m},#{@n}}"
+	end
+      else
+	if @m == @n
+	  out.text "{#{@m}}"
+	else
+	  out.text "{#{@m},#{@n}}"
+	end
+      end
+      out.text '?' unless @greedy
     end
   end
 
   class Elt < RubyRegexp
   end
 
+  def charclass(natset)
+    if natset.empty?
+      EmptySet
+    else
+      CharClass.new(natset)
+    end
+  end
   class CharClass < Elt
     None = NatSet.empty
     Any = NatSet.whole
