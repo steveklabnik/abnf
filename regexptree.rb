@@ -52,7 +52,7 @@ class RegexpTree
 
   def to_s
     PrettyPrint.singleline_format('') {|out|
-      out.text '(?-mix:'
+      out.text '(?-mi:' # x is not required because all whitespaces are escaped.
       pretty_format(out)
       out.text ')'
     }
