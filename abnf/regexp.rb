@@ -2,6 +2,14 @@ require 'abnf/grammar'
 require 'regexptree'
 
 class ABNF
+  def ABNF.regexp(desc, name=nil)
+    ABNF.regexp_tree(desc, name).regexp
+  end
+
+  def ABNF.regexp_tree(desc, name=nil)
+    ABNF.parse(desc).regexp_tree(name)
+  end
+
   def regexp(name=start_symbol)
     regexp_tree(name).regexp
   end

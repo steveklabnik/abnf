@@ -42,14 +42,6 @@ Note that this is wrong because it doesn't match to "::13.1.68.3".
 require 'tsort'
 
 class ABNF
-  def ABNF.regexp(desc, name=nil)
-    ABNF.regexp_tree(desc, name).regexp
-  end
-
-  def ABNF.regexp_tree(desc, name=nil)
-    ABNF.parse(desc).regexp_tree(name)
-  end
-
   def ABNF.parse(desc, dont_merge_core_rules=false)
     grammar = ABNF.new
     Parser.new(grammar).parse(desc)
