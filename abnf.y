@@ -29,7 +29,6 @@ end
 
 ---- header
 
-require 'pp'
 require 'regen'
 
 class ABNF
