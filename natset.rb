@@ -21,6 +21,9 @@ NatSet represents a set of naturals - non-negative integers.
 --- self + other
 --- self - other
 --- self & other
+
+--- split_each(ns, ...) {|region, ns, ...| ... }
+--- split(ns, ...)
 =end
 
 class NatSet
@@ -186,6 +189,31 @@ class NatSet
     self.class._new(*es0)
   end
 
+  def split_each(*natsets)
+    if natsets.empty?
+      yield [self]
+    else
+      current = natsets.pop
+      
+      a = self - current
+      unless a.empty?
+        a.split_each(*natsets) {|nss| yield nss}
+      end
+      
+      a = self & current
+      unless a.empty?
+        a.split_each(*natsets) {|nss| nss.push current; yield nss}
+      end
+    end
+    nil
+  end
+
+  def split(*natsets)
+    result = []
+    split_each(*natsets) {|r| result << r}
+    result
+  end
+
   def pretty_print(pp)
     pp.object_group(self) {
       pp.text ':'
@@ -277,5 +305,34 @@ if __FILE__ == $0
       assert_raises(ArgumentError) {NatSet.new("a".."b")}
     end
 
+    def test_split
+      u = NatSet.universal
+      assert_equal([[NatSet.universal]], u.split())
+      assert_equal([[NatSet.universal]], u.split(NatSet.empty))
+      assert_equal([[NatSet.universal, u]], u.split(u))
+
+      n = NatSet.new(10..20)
+      assert_equal([[NatSet.new(0..9, 21..-1)],
+                    [NatSet.new(10..20), n]],
+                   u.split(n))
+
+      ns = [NatSet.new(10..20), NatSet.new(10..20)]
+      assert_equal([[NatSet.new(0..9, 21..-1)],
+                    [NatSet.new(10..20), *ns]],
+                   u.split(*ns))
+
+      ns = [NatSet.new(1..30), NatSet.new(5..40)]
+      assert_equal([[NatSet.new(0, 41..-1)],
+                    [NatSet.new(1..4), ns[0]],
+                    [NatSet.new(31..40), ns[1]],
+                    [NatSet.new(5..30), *ns]],
+                   u.split(*ns))
+
+      ns = [NatSet.new(1..30), NatSet.new(5..20)]
+      assert_equal([[NatSet.new(0, 31..-1)],
+                    [NatSet.new(1..4, 21..30), ns[0]],
+                    [NatSet.new(5..20), *ns]],
+                   u.split(*ns))
+    end
   end
 end
