@@ -19,25 +19,25 @@ strongly connected components.
 
 TSort is designed to be able to use with any object which can be interpreted
 as a graph.  TSort requires two methods to interpret a object as a graph:
-tsort_each_node and tsort_decendants.
+tsort_each_node and tsort_descendants.
 
 tsort_each_node is used to iterate all nodes over a graph.
-tsort_decendants is used to find all decendant nodes of a given node.
+tsort_descendants is used to find all descendant nodes of a given node.
 
 The equality of nodes are defined as eql? and hash.
-TSort uses Hash internaly.
+TSort uses Hash internally.
 
 === methods
 --- tsort 
-    returns a topologicaly sorted array of nodes.
+    returns a topologically sorted array of nodes.
     The array is sorted as a leaf to a root:
-    I.e. first element of the array has no decendants and
-    there is no node which has last element of the array as a decendant.
+    I.e. first element of the array has no descendants and
+    there is no node which has last element of the array as a descendant.
 
     If there is a cycle, the exception TSort::Cyclic is raised.
 
 --- tsort_each {|node| ...}
-    is the iterater version of tsort method.
+    is the iterator version of tsort method.
     obj.tsort_each is similar to obj.tsort.each but
     modification of obj during the iteration may cause unexpected result.
 
@@ -49,7 +49,7 @@ TSort uses Hash internaly.
     Each elements of the array represents strongly connected component.
 
 --- each_strongly_connected_component {|nodes| ...}
-    is the iterater version of strongly_connected_components method.
+    is the iterator version of strongly_connected_components method.
     obj.each_strongly_connected_component is similar to
     obj.strongly_connected_components.each but
     modification of obj during the iteration may cause unexpected result.
@@ -59,7 +59,7 @@ TSort uses Hash internaly.
 --- tsort_each_node
     should be implemented by a extended class.
 
---- tsort_decendants
+--- tsort_descendants
     should be implemented by a extended class.
 
 == Hash
@@ -67,23 +67,23 @@ Hash is extended by TSort.
 
 Hash is interpreted as graph as follows:
 * key is interpreted as node.
-* value should be Array and it is interpreted as decendants of corresponding key.
+* value should be Array and it is interpreted as descendants of corresponding key.
 
-As a result, tsort_each_node and tsort_decendants is defined as follows:
+As a result, tsort_each_node and tsort_descendants is defined as follows:
 * tsort_each_node is defined as alias to each_key.
-* tsort_decendants is defined as alias to [].
+* tsort_descendants is defined as alias to [].
 
 == Array
 Array is extended by TSort.
 
 Array is interpreted as graph as follows:
 * index is interpreted as node.
-* array element should be Array and it is interpreted as decendants of
+* array element should be Array and it is interpreted as descendants of
   corresponding index.
 
-tsort_each_node and tsort_decendants is defined as follows:
+tsort_each_node and tsort_descendants is defined as follows:
 * tsort_each_node is defined as alias to each_index.
-* tsort_decendants is defined as alias to [].
+* tsort_descendants is defined as alias to [].
 
 == Bugs
 
@@ -156,7 +156,7 @@ module TSort
     stack_length = stack.length;
     stack << node
 
-    tsort_decendants(node).each {|next_node|
+    tsort_descendants(node).each {|next_node|
       next_id = id_map[next_node]
       if next_id != -1
         if !next_id.nil? && next_id < reachable_minimum_id
@@ -185,7 +185,7 @@ module TSort
     raise NotImplementedError.new
   end
 
-  def tsort_decendants(k, &block)
+  def tsort_descendants(k, &block)
     raise NotImplementedError.new
   end
 end
@@ -193,11 +193,11 @@ end
 class Hash
   include TSort
   alias tsort_each_node each_key
-  alias tsort_decendants []
+  alias tsort_descendants []
 end
 
 class Array
   include TSort
   alias tsort_each_node each_index
-  alias tsort_decendants []
+  alias tsort_descendants []
 end
