@@ -2,11 +2,15 @@ require 'abnf/grammar'
 require 'rubyregexp'
 
 class ABNF
+  def regexp(name=start_symbol)
+    Regexp.compile ruby_regexp(name).to_s
+  end
+
   # Convert a recursive rule to non-recursive rule if possible.
   # This conversion is *not* perfect.
   # It may fail even if possible.
   # More work (survey) is needed.
-  def regexp(name=start_symbol)
+  def ruby_regexp(name=start_symbol)
     env = {}
     each_strongly_connected_component_from(name) {|ns|
       rules = {}
@@ -128,7 +132,7 @@ class ABNF
 	}
       }
     }
-    env[name].regexp
+    env[name].ruby_regexp
   end
 
   NonRecursion = 1	# X = a
@@ -361,8 +365,8 @@ class ABNF
     end
   end
 
-  class Alt; def regexp() RubyRegexp.alt(*@elts.map {|e| e.regexp}) end end
-  class Seq; def regexp() RubyRegexp.seq(*@elts.map {|e| e.regexp}) end end
-  class Rep; def regexp() @elt.regexp.rep(min, max, greedy) end end
-  class Term; def regexp() RubyRegexp.charclass(@natset) end end
+  class Alt; def ruby_regexp() RubyRegexp.alt(*@elts.map {|e| e.ruby_regexp}) end end
+  class Seq; def ruby_regexp() RubyRegexp.seq(*@elts.map {|e| e.ruby_regexp}) end end
+  class Rep; def ruby_regexp() @elt.ruby_regexp.rep(min, max, greedy) end end
+  class Term; def ruby_regexp() RubyRegexp.charclass(@natset) end end
 end

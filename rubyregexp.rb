@@ -42,7 +42,7 @@ class RubyRegexp
     if %r{/} =~ r
       "%r{#{r}}"
     else
-      "/#{r}/"
+      "%r/#{r}/"
     end
   end
 
