@@ -294,9 +294,9 @@ p %r{\A#{ABNF.regexp <<'End'
 End
 }\z}o
 
-== ABNF class
+== ABNF module
 
-=== class methods
+=== module methods
 
 --- regexp(abnf_description[, start_symbol])
     converts ((|abnf_description|)) to a regular expression corresponding with ((|start_symbol|)).
