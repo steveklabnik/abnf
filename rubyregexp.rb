@@ -17,26 +17,26 @@ class RubyRegexp
     end
   end
 
-  def pretty_display(out=$>)
-    PrettyPrint.format(out) {|pout|
-      pout.group(3, '%r{', '}x') {
-	pretty_format(pout)
+  def pretty_display(output=$>)
+    PrettyPrint.format(output) {|out|
+      out.group(3, '%r{', '}x') {
+	pretty_format(out)
       }
     }
-    out << "\n"
+    output << "\n"
   end
 
   def inspect
-    PrettyPrint.singleline_format('') {|pout|
-      pout.group(3, '%r{', '}') {
-	pretty_format(pout)
+    PrettyPrint.singleline_format('') {|out|
+      out.group(3, '%r{', '}') {
+	pretty_format(out)
       }
     }
   end
 
   def to_s
-    PrettyPrint.singleline_format('') {|pout|
-      pretty_format(pout)
+    PrettyPrint.singleline_format('') {|out|
+      pretty_format(out)
     }
   end
 
@@ -81,12 +81,14 @@ class RubyRegexp
       if @rs.empty?
         out.text '(?!)'
       else
-	@rs.each_with_index {|r, i|
-	  unless i == 0
-	    out.text '|'
-	    out.group {out.breakable ''}
-	  end
-	  r.parenthesize(Alt).pretty_format(out)
+	out.group {
+	  @rs.each_with_index {|r, i|
+	    unless i == 0
+	      out.text '|'
+	      out.breakable ''
+	    end
+	    r.parenthesize(Alt).pretty_format(out)
+	  }
 	}
       end
     end
@@ -128,11 +130,13 @@ class RubyRegexp
     end
 
     def pretty_format(out)
-      @rs.each_with_index {|r, i|
-	unless i == 0
-	  out.group {out.breakable ''}
-	end
-	r.parenthesize(Seq).pretty_format(out)
+      out.group {
+	@rs.each_with_index {|r, i|
+	  unless i == 0
+	    out.group {out.breakable ''}
+	  end
+	  r.parenthesize(Seq).pretty_format(out)
+	}
       }
     end
   end
