@@ -18,6 +18,7 @@ Tanaka Akira <akr@m17n.org>
 Following example shows URI-reference defined by RFC 2396 can be converted to
 Regexp.
 Note that URI-reference has no recursion.
+Also note that the example works well without installing the library after make.
 
   % cat sample/uri.rb 
   require 'pp'
@@ -96,8 +97,9 @@ Note that URI-reference has no recursion.
 = Installation
 
 % make
-
-copy abnf.rb, natset.rb, regexptree.rb and abnf/*.rb to library directory.
+% mkdir /usr/local/lib/ruby/site_ruby/abnf
+% cp abnf/*.rb /usr/local/lib/ruby/site_ruby/abnf
+% cp abnf.rb natset.rb regexptree.rb /usr/local/lib/ruby/site_ruby
 
 = License
 
