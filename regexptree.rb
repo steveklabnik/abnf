@@ -107,7 +107,7 @@ class RegexpTree
 	downcase.pretty_format(out)
 	out.text ')'
       else
-	out.text '(?-mi:'
+	out.text '(?-im:'
 	pretty_format(out)
 	out.text ')'
       end
