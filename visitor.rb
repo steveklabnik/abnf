@@ -3,6 +3,8 @@
 visitor.rb generates stub of visitor pattern.
 Using visitor.rb, you don't need to define `accept' method for each class.
 
+visitor.rb requires abstract.rb.
+
 == Example
   C = visitor_pattern
 
@@ -23,13 +25,8 @@ The definitions of C, D and E are same as follows without visitor.rb.
 
   class C
     class Visitor
-      def visit_D(_)
-        raise NotImplementedError.new
-      end
-
-      def visit_E(_)
-        raise NotImplementedError.new
-      end
+      define_abstract_method :visit_D
+      define_abstract_method :visit_E
     end
   end
 
@@ -56,35 +53,18 @@ The definitions of C, D and E are same as follows without visitor.rb.
     When a subclass of ((|element_class|)) C is defined,
     ((|element_class|))#accept which calls visit_C
     and
-    ((|visitor_class|))#visit_C which raises NotImplementedError
-    is automatically defined.
-    if the name of C contains ::, it is substituted by _.
+    an abstract method ((|visitor_class|))#visit_C
+    are automatically defined.
+    If the name of C contains ::, it is substituted by _.
 
     If a block is given, it is called to generate a method name.
-
-    ((|visitor_class|)).non_redefined_visitor_methods is
-    defined.
 
 == generated element class
 
 === class methods
---- non_redefined_visitor_methods
-    returns method names which are not redefined.
-    It is assumed to be used by unit test.
-
-      class V < C::Visitor
-        def visit_D(d) p d end
-      end
-
-      if __FILE__ == $0
-
-        ...
-        assert_equal([], V.non_redefined_visitor_methods)
-        ...
-
-      end
-
 =end
+
+require 'abstract'
 
 module Kernel
   def visitor_pattern(element_class=nil, visitor_class=nil, &gen_methodname)
@@ -99,8 +79,6 @@ module Kernel
       ('visit_' + subclass.name.sub(/::/, '_')).intern
     }
 
-    visitor_methods = visitor_class.const_set('VisitorMethods', [])
-
     class << element_class
       self
     end.instance_eval {
@@ -112,28 +90,10 @@ module Kernel
 	  end
 	End
 	visitor_class.class_eval {
-	  define_method(methodname) {|d| raise NotImplementedError.new}
+	  define_abstract_method methodname
 	}
-	visitor_methods << [
-	  methodname,
-	  visitor_class.instance_method(methodname)
-	]
       }
     }
-
-    visitor_class.class_eval <<-'End'
-      def self.non_redefined_visitor_methods
-	result = []
-	VisitorMethods.each {|n, m|
-	  #p [m.inspect, instance_method(n).inspect]
-	  if m.inspect.sub(/\A[^\(]*\(/, '') ==
-	     instance_method(n).inspect.sub(/\A[^\(]*\(/, '')
-	    result << n
-	  end
-	}
-	result
-      end
-    End
 
     element_class
   end

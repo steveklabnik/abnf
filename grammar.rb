@@ -535,13 +535,13 @@ if __FILE__ == $0
     end
 
     def test_visitor_methods
-      assert_equal([], Grammar::Copy.non_redefined_visitor_methods)
-      assert_equal([], Grammar::SubstRuleRef.non_redefined_visitor_methods)
-      assert_equal([], Grammar::Simplify.non_redefined_visitor_methods)
-      assert_equal([], Grammar::Traverse.non_redefined_visitor_methods)
-      assert_equal([], Grammar::TraverseRuleRef.non_redefined_visitor_methods)
-      assert_equal([], Grammar::ScanBackref.non_redefined_visitor_methods)
-      assert_equal([], Grammar::RegexpConv.non_redefined_visitor_methods)
+      assert_equal([], Grammar::Copy.abstract_methods)
+      assert_equal([], Grammar::SubstRuleRef.abstract_methods)
+      assert_equal([], Grammar::Simplify.abstract_methods)
+      assert_equal([], Grammar::Traverse.abstract_methods)
+      assert_equal([], Grammar::TraverseRuleRef.abstract_methods)
+      assert_equal([], Grammar::ScanBackref.abstract_methods)
+      assert_equal([], Grammar::RegexpConv.abstract_methods)
     end
   end
 
