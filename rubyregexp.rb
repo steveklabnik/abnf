@@ -41,9 +41,16 @@ class RubyRegexp
     rs2 = []
     rs.each {|r|
       if Alt === r
+	next if r.empty_set?
         rs2.concat r.rs
-      elsif CharClass === r && CharClass === rs2.last
-        rs2[-1] = CharClass.new(rs2.last.natset + r.natset)
+      elsif CharClass === r
+	if r.empty_set?
+	  next
+        elsif CharClass === rs2.last
+	  rs2[-1] = CharClass.new(rs2.last.natset + r.natset)
+	else
+	  rs2 << r
+	end
       else
         rs2 << r
       end
@@ -57,6 +64,10 @@ class RubyRegexp
   class Alt < RubyRegexp
     def initialize(rs)
       @rs = rs
+    end
+
+    def empty_set?
+      @rs.empty?
     end
 
     def pretty_format(out)
@@ -81,7 +92,13 @@ class RubyRegexp
     rs2 = []
     rs.each {|r|
       if Seq === r
-        rs2.concat r.rs
+	if r.empty_sequence?
+	  next
+	else
+	  rs2.concat r.rs
+	end
+      elsif (Alt === r || CharClass === r) && r.empty_set?
+        return r
       else
         rs2 << r
       end
@@ -97,6 +114,10 @@ class RubyRegexp
       @rs = rs
     end
     attr_reader :rs
+
+    def empty_sequence?
+      @rs.empty?
+    end
 
     def pretty_format(out)
       @rs.each_with_index {|r, i|
@@ -157,6 +178,10 @@ class RubyRegexp
       @natset = natset
     end
     attr_reader :natset
+
+    def empty_set?
+      @natset.empty?
+    end
 
     def pretty_format(out)
       case @natset
