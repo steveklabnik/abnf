@@ -109,14 +109,14 @@ class NatSet
   end
   alias & ampersand
 
+  def ampersand_natset(natset)
+    merge(natset) {|a, b| a && b}
+  end
+
   def minus(other)
     other.minus_natset(self)
   end
   alias - minus
-
-  def ampersand_natset(natset)
-    merge(natset) {|a, b| a && b}
-  end
 
   def minus_natset(natset) # natset - self
     # Since double dispatch *inverses* a receiver and an argument, 
@@ -177,7 +177,7 @@ if __FILE__ == $0
     end
 
     def test_all
-      assert(NatSet.empty.empty?)
+      assert(NatSet.all.all?)
     end
 
     def test_open
