@@ -1,3 +1,4 @@
+require 'abnf/abnf'
 require 'abnf/parser'
 
 class ABNF

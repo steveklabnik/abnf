@@ -37,6 +37,12 @@ end
 require 'abnf/grammar'
 
 class ABNF
+  def ABNF.parse(desc, dont_merge_core_rules=false)
+    grammar = ABNF.new
+    Parser.new(grammar).parse(desc)
+    grammar.merge(CoreRules) unless dont_merge_core_rules
+    grammar
+  end
 
 ---- inner
 

@@ -1,4 +1,4 @@
-require 'abnf/grammar'
+require 'abnf/abnf'
 require 'regexptree'
 
 class ABNF
