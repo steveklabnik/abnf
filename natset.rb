@@ -22,7 +22,7 @@ NatSet represents a set of naturals - non-negative integers.
 --- self - other
 --- self & other
 
---- split_each(ns, ...) {|region, ns, ...| ... }
+--- split_each(ns, ...) {|region, *nss| ... }
 --- split(ns, ...)
 =end
 
