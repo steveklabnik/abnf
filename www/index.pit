@@ -118,8 +118,8 @@ A converted regexp can be used to match in place as:
 
 == Document
 * [./abnf.html abnf.rb reference manual]
-* [./natset.html natset.rb reference manual]
 * [./regexptree.html regexptree.rb reference manual]
+* [./natset.html natset.rb reference manual]
 
 == Requirements
 * [http://www.ruby-lang.org/ ruby-1.7.3 (2002-10-08)] (older version doesn't work.)
