@@ -59,6 +59,31 @@ The definitions of C, D and E are same as follows without visitor.rb.
     The class has inner class Visitor.
     Visitor can be used as superclass of visitors.
     All visit_classname is defined as raising NotImplementedError.
+
+== generated element class
+
+=== constants
+--- Visitor
+
+== Visitor class in generated element class
+
+=== class methods
+--- non_redefined_visitor_methods
+    returns method names which are not redefined.
+    It is assumed to be used by unit test.
+
+      class V < C::Visitor
+        def visit_D(d) p d end
+      end
+
+      if __FILE__ == $0
+
+        ...
+        assert_equal([], V.non_redefined_visitor_methods)
+        ...
+
+      end
+
 =end
 
 module Kernel
@@ -68,6 +93,20 @@ module Kernel
     }
     Class.new {|c|
       visitor_class = Class.new
+      visitor_methods = visitor_class.const_set('VisitorMethods', [])
+      visitor_class.class_eval <<-'End'
+        def self.non_redefined_visitor_methods
+	  result = []
+	  VisitorMethods.each {|n, m|
+	    #p [m.to_s, instance_method(n).to_s]
+	    if m.to_s.sub(/\A[^\(]*\(/, '') ==
+	       instance_method(n).to_s.sub(/\A[^\(]*\(/, '')
+	      result << n
+	    end
+	  }
+	  result
+	end
+      End
       c.const_set('Visitor', visitor_class)
       class << c
 	self
@@ -82,6 +121,10 @@ module Kernel
 	  visitor_class.class_eval {
 	    define_method(methodname) {|d| raise NotImplementedError.new}
 	  }
+	  visitor_methods << [
+	    methodname,
+	    visitor_class.instance_method(methodname)
+	  ]
 	}
       }
     }
