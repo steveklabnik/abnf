@@ -65,6 +65,10 @@ class ABNF
     @rules = {}
   end
 
+  def start_symbol
+    @names.first
+  end
+
   def names
     @names.dup
   end

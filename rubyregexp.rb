@@ -17,6 +17,15 @@ class RubyRegexp
     end
   end
 
+  def pretty_print(pp)
+    pp.group(1, '#<RubyRegexp:', '>') {
+      pp.breakable
+      pp.group(3, '%r{', '}x') {
+	pretty_format(pp)
+      }
+    }
+  end
+
   def pretty_display(output=$>)
     PrettyPrint.format(output) {|out|
       out.group(3, '%r{', '}x') {
