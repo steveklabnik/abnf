@@ -58,7 +58,7 @@ TSort uses Hash internally.
 --- tsort_each_node
     should be implemented by a extended class.
 
---- tsort_descendants
+--- tsort_descendants(node)
     should be implemented by a extended class.
 
 == Hash
@@ -68,9 +68,11 @@ Hash is interpreted as graph as follows:
 * key is interpreted as node.
 * value should be Array and it is interpreted as descendants of corresponding key.
 
-As a result, tsort_each_node and tsort_descendants is defined as follows:
-* tsort_each_node is defined as alias to each_key.
-* tsort_descendants is defined as alias to fetch.
+--- tsort_each_node {|node| ... }
+    is an alias to each_key.
+
+--- tsort_descendants(node)
+    is an alias to fetch.
 
 == Array
 Array is extended by TSort.
@@ -80,9 +82,11 @@ Array is interpreted as graph as follows:
 * array element should be Array and it is interpreted as descendants of
   corresponding index.
 
-tsort_each_node and tsort_descendants is defined as follows:
-* tsort_each_node is defined as alias to each_index.
-* tsort_descendants is defined as alias to fetch.
+--- tsort_each_node {|node| ... }
+    is an alias to each_index.
+
+--- tsort_descendants(node)
+    is an alias to fetch.
 
 == Bugs
 
