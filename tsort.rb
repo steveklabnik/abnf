@@ -126,7 +126,7 @@ module TSort
   end
 
   def strongly_connected_components_rec(node, id_map, stack, &block)
-    reachable_minimum_id = id = id_map[node] = id_map.size;
+    reachable_minimum_id = current_id = id_map[node] = id_map.size;
     stack_length = stack.length;
     stack << node
 
@@ -145,7 +145,7 @@ module TSort
       end
     }
 
-    if id == reachable_minimum_id
+    if current_id == reachable_minimum_id
       component = stack.slice!(stack_length .. -1)
       yield component
       component.each {|n|
