@@ -371,29 +371,19 @@ class Grammar
 
     def visitTerm(e)
       case e.natset
-      when None
-        '(?!)'
-      when Any
-        '[\s\S]'
-      when NL
-        '\n'
-      when NonNL
-        '.'
-      when Word
-        '\w'
-      when NonWord
-        '\W'
-      when Space
-        '\s'
-      when NonSpace
-        '\S'
-      when Digit
-        '\d'
-      when NonDigit
-        '\D'
+      when None; '(?!)'
+      when Any; '[\s\S]'
+      when NL; '\n'
+      when NonNL; '.'
+      when Word; '\w'
+      when NonWord; '\W'
+      when Space; '\s'
+      when NonSpace; '\S'
+      when Digit; '\d'
+      when NonDigit; '\D'
       else
 	if val = e.natset.singleton?
-	  return encode_elt val
+	  return encode_elt(val)
 	end
         if e.natset.open?
 	  neg_mark = '^'
@@ -422,6 +412,13 @@ class Grammar
 
     def encode_elt(e)
       case e
+      when ?\t; '\t'
+      when ?\n; '\n'
+      when ?\r; '\r'
+      when ?\f; '\f'
+      when ?\v; '\v'
+      when ?\a; '\a'
+      when ?\e; '\e'
       when ?0..?9, ?A..?Z, ?a..?z, ?_
         sprintf("%c", e)
       else

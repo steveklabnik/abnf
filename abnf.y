@@ -44,11 +44,8 @@ module ABNF
   def ABNF.regexp(desc, name=nil)
     grammar = Grammar.new
     grammar.import(CoreRules)
-    parser = ABNFParser.new(grammar)
-    first = parser.parse(desc)
-    if first.nil?
-      raise StandardError.new "no rule defined"
-    end
+    first = ABNFParser.new(grammar).parse(desc)
+    raise StandardError.new("no rule defined") if first.nil?
     name ||= first
     grammar.regexp(name)
   end
