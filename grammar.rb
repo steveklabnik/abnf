@@ -16,7 +16,7 @@ class Grammar
   end
 
   def regexp(name)
-    @rules[name].to_regexp
+    @rules[name].accept(RegexpConv.new({}))
   end
 
   include TSort
@@ -73,76 +73,6 @@ class Grammar
     end
     attr_reader :natset
 
-    Empty = NatSet.empty
-    Full = NatSet.all
-    NL = NatSet.create(?\n)
-    NonNL = ~NL
-    Word = NatSet.create(?0..?9, ?A..?Z, ?_, ?a..?z)
-    NonWord = ~Word
-    Space = NatSet.create(?t, ?\n, ?\f, ?\r, ?\ )
-    NonSpace = ~Space
-    Digit = NatSet.create(?0..?9)
-    NonDigit = ~Digit
-
-    def to_regexp(env=nil)
-      case @natset
-      when Empty
-        '(?!)'
-      when Full
-        '[\s\S]'
-      when NL
-        '\n'
-      when NonNL
-        '.'
-      when Word
-        '\w'
-      when NonWord
-        '\W'
-      when Space
-        '\s'
-      when NonSpace
-        '\S'
-      when Digit
-        '\d'
-      when NonDigit
-        '\D'
-      else
-	if e = @natset.singleton?
-	  return encode_elt e
-	end
-        if @natset.open?
-	  neg_mark = '^'
-	  es = (~@natset).es
-	else
-	  neg_mark = ''
-	  es = @natset.es.dup
-	end
-
-        r = ''
-        until es.empty?
-          if es[0] + 1 == es[1]
-            r << encode_elt(es[0])
-          elsif es[0] + 2 == es[1]
-            r << encode_elt(es[0]) << encode_elt(es[1] - 1)
-          else
-            r << encode_elt(es[0]) << '-' << encode_elt(es[1] - 1)
-          end
-          es.shift
-          es.shift
-        end
-
-        "[#{neg_mark}#{r}]"
-      end
-    end
-
-    def encode_elt(e)
-      case e
-      when ?0..?9, ?A..?Z, ?a..?z, ?_
-        sprintf("%c", e)
-      else
-        sprintf("\\x%02x", e)
-      end
-    end
   end
 
 ### Basic Combinator
@@ -306,6 +236,145 @@ class Grammar
       end
     end
   end
+
+  class RegexpConv < Elt::Visitor
+    def initialize(env)
+      @env = env
+    end
+
+    Empty = NatSet.empty
+    Full = NatSet.all
+    NL = NatSet.create(?\n)
+    NonNL = ~NL
+    Word = NatSet.create(?0..?9, ?A..?Z, ?_, ?a..?z)
+    NonWord = ~Word
+    Space = NatSet.create(?t, ?\n, ?\f, ?\r, ?\ )
+    NonSpace = ~Space
+    Digit = NatSet.create(?0..?9)
+    NonDigit = ~Digit
+
+    def visitTerm(e)
+      case e.natset
+      when Empty
+        '(?!)'
+      when Full
+        '[\s\S]'
+      when NL
+        '\n'
+      when NonNL
+        '.'
+      when Word
+        '\w'
+      when NonWord
+        '\W'
+      when Space
+        '\s'
+      when NonSpace
+        '\S'
+      when Digit
+        '\d'
+      when NonDigit
+        '\D'
+      else
+	if val = e.natset.singleton?
+	  return encode_elt val
+	end
+        if e.natset.open?
+	  neg_mark = '^'
+	  es = (~e.natset).es
+	else
+	  neg_mark = ''
+	  es = e.natset.es.dup
+	end
+
+        r = ''
+        until es.empty?
+          if es[0] + 1 == es[1]
+            r << encode_elt(es[0])
+          elsif es[0] + 2 == es[1]
+            r << encode_elt(es[0]) << encode_elt(es[1] - 1)
+          else
+            r << encode_elt(es[0]) << '-' << encode_elt(es[1] - 1)
+          end
+          es.shift
+          es.shift
+        end
+
+        "[#{neg_mark}#{r}]"
+      end
+    end
+
+    def encode_elt(e)
+      case e
+      when ?0..?9, ?A..?Z, ?a..?z, ?_
+        sprintf("%c", e)
+      else
+        sprintf("\\x%02x", e)
+      end
+    end
+
+    def visitCon(e)
+      "(?:#{e.elts.map {|d| d.accept(self)}.join ''})"
+    end
+
+    def visitAlt(e)
+      "(?:#{e.elts.map {|d| d.accept(self)}.join '|'})"
+    end
+
+    def visitRep(e)
+      r = e.elt.accept(self)
+      greedy_mark = e.greedy ? '' : '?'
+      if e.min == 0
+	if e.max == 1
+	  return "(?:#{r}?#{greedy_mark})"
+        elsif e.max == nil
+	  return "(?:#{r}*#{greedy_mark})"
+	end
+      elsif e.min == 1
+        if e.max == nil
+	  return "(?:#{r}+#{greedy_mark})"
+	end
+      end
+
+      if e.max == nil
+	"(?:#{r}{#{e.min},}#{greedy_mark})"
+      elsif e.min == e.max
+	"(?:#{r}{#{e.min}}#{greedy_mark})"
+      else
+	"(?:#{r}{#{e.min},#{e.max}}#{greedy_mark})"
+      end
+    end
+
+    def visitRef(e)
+      raise StandardError "cannot convert rule reference to regexp: #{e.name}"
+    end
+
+    def visitBackrefDef(e)
+      "(#{e.elt.accept(self)})"
+    end
+
+    def visitBackref(e)
+      "\\#{@env[e.name]}"
+    end
+
+    def visitLookAhead(e)
+      "(?#{e.neg ? '!' : '='}#{e.elt.accept(self)})"
+    end
+
+    def visitNoBacktrack(e)
+      "(?>#{e.elt.accept(self)})"
+    end
+
+    def visitRegexpOption(e)
+      opt = ''
+      e.opts.each {|o| opt << sprintf("%c", o) if 0 < o}
+      opt << '-'
+      e.opts.each {|o| opt << sprintf("%c", o) if 0 > o}
+      opt.sub!(/-\z/, '')
+      "(?#{opt}:#{e.elt.accept(self)})"
+    end
+  end
+
 end
 
 if __FILE__ == $0
