@@ -1,5 +1,6 @@
 require 'natset'
 require 'tsort'
+require 'visitor'
 
 class Grammar
   def initialize
@@ -26,8 +27,7 @@ class Grammar
   end
 
 ### Abstract Class
-  class Visitor
-  end
+  Elt = visitor_pattern {|c| 'visit' + c.name.sub(/\AGrammar::/, '')}
 
   class Elt
     def *(other)
@@ -59,20 +59,6 @@ class Grammar
 
     def each_ref(&block)
       self.accept(TraverseRef.new(&block))
-    end
-
-    def Elt.inherited(subclass)
-      methodname = 'visit' + subclass.name.sub(/\AGrammar::/, '')
-      subclass.class_eval <<-End
-	def accept(v)
-	  v.#{methodname} self
-	end
-      End
-      Visitor.class_eval <<-End
-        def #{methodname}
-	  raise NotImplementedError.new
-	end
-      End
     end
   end
 
@@ -170,7 +156,7 @@ class Grammar
   end
 
 ### Visitor
-  class Traverse < Visitor
+  class Traverse < Elt::Visitor
     def visitTerm(e) end
     def visitCon(e) e.elts.each {|d| d.accept(self)} end
     def visitAlt(e) e.elts.each {|d| d.accept(self)} end
@@ -193,7 +179,7 @@ class Grammar
     end
   end
 
-  class Copy < Visitor
+  class Copy < Elt::Visitor
     def visitTerm(e) Term.new(e.natset) end
     def visitCon(e) Con.new(*e.elts.map {|d| d.accept(self)}) end
     def visitAlt(e) Alt.new(*e.elts.map {|d| d.accept(self)}) end
