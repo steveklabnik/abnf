@@ -8,8 +8,7 @@ It is because existence of a method is checked at run time.
 This library makes it possible to check existence of a method with unit test
 before run time.
 
-== example
-
+== Example
   require 'abstract'
 
   class A
@@ -31,20 +30,19 @@ before run time.
 
     class AbstractTest < RUNIT::TestCase
       def test_abstract
-	assert_equal([], B.abstract_methods) #=> success.
-	assert_equal([], C.abstract_methods) #=> fail.
+	assert_equal([], B.abstract_methods) #=> success
+	assert_equal([], C.abstract_methods) #=> fail
       end
     end
 
     RUNIT::CUI::TestRunner.run(AbstractTest.suite)
   end
 
-
-== methods
---- Module#define_abstract_method name
+== Methods
+--- Module#define_abstract_method(name)
     defines an abstract method named as ((|name|)).
 
-    If the method is called, AbstractMethodCallError is raised.
+    If the defined method is called, AbstractMethodCallError is raised.
 
 --- Module#abstract_methods
     returns an array which contains list of non-redefined abstract method names.
@@ -58,7 +56,6 @@ class AbstractMethodCallError < NotImplementedError
 end
 
 class Module
-
   AbstractMethods = {}
 
   def define_abstract_method(name)
@@ -142,5 +139,3 @@ if __FILE__ == $0
 
   RUNIT::CUI::TestRunner.run(AbstractTest.suite)
 end
-
-# Hash で集合を表す set.rb を作って使うか?
