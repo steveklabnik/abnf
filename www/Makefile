@@ -1,7 +1,7 @@
 all: index.html abnf.html natset.html regexptree.html
 
 index.html: index.pit
-	pit --charset US-ASCII --output-format meta -o $@ $<
+	pit --output-format meta -o $@ $<
 
 abnf.html: ../abnf.rb
 	rd2 -oabnf $< 
