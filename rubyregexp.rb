@@ -26,11 +26,17 @@ class RubyRegexp
     out << "\n"
   end
 
-  def display(out=$>)
-    PrettyPrint.singleline_format(out) {|pout|
+  def inspect
+    PrettyPrint.singleline_format('') {|pout|
       pout.group(1, '/', '/') {
 	pretty_format(pout)
       }
+    }
+  end
+
+  def to_s
+    PrettyPrint.singleline_format('') {|pout|
+      pretty_format(pout)
     }
   end
 
@@ -65,6 +71,7 @@ class RubyRegexp
     def initialize(rs)
       @rs = rs
     end
+    attr_reader :rs
 
     def empty_set?
       @rs.empty?
@@ -138,7 +145,7 @@ class RubyRegexp
   def closure() Rep.create(self, 0, nil) end
   def positive_closure() Rep.create(self, 1, nil) end
   def optional() Rep.create(self, 0, 1) end
-  def repeat(m, n=m) Rep.create(self, m, n) end
+  def repeat(m, n=m, greedy=true) Rep.create(self, m, n, greedy) end
   class Rep < RubyRegexp
     def Rep.create(r, m=0, n=nil, greedy=true)
       return EmptySequence if m == 0 && n == 0
@@ -194,7 +201,7 @@ class RubyRegexp
   class Elt < RubyRegexp
   end
 
-  def charclass(natset)
+  def RubyRegexp.charclass(natset)
     if natset.empty?
       EmptySet
     else
@@ -271,7 +278,7 @@ class RubyRegexp
       when ?\v; '\v'
       when ?\a; '\a'
       when ?\e; '\e'
-      when ?0..?9, ?A..?Z, ?a..?z, ?_
+      when ?!, ?", ?%, ?&, ?', ?,, ?:, ?;, ?<, ?=, ?>, ?@, ?0..?9, ?A..?Z, ?_, ?`, ?a..?z, ?~
         sprintf("%c", e)
       else
         sprintf("\\x%02x", e)
