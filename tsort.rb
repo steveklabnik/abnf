@@ -1,7 +1,7 @@
 =begin
 = tsort.rb
 
-tsort.rb provides a module for topological sorting and
+tsort.rb provides a module for topological sort and
 strongly connected components.
 
 == Example
@@ -13,17 +13,17 @@ strongly connected components.
   #=> [[4], [2, 3], [1]]
 
 == TSort module
-TSort implements topological sorting using Tarjan's algorithm for
+TSort implements topological sort using Tarjan's algorithm for
 strongly connected components.
 
 TSort is designed to be able to use with any object which can be interpreted
 as a graph.  TSort requires two methods to interpret a object as a graph:
 tsort_each_node and tsort_descendants.
 
-tsort_each_node is used to iterate all nodes over a graph.
-tsort_descendants is used to find all descendant nodes of a given node.
+* tsort_each_node is used to iterate all nodes over a graph.
+* tsort_descendants is used to find all descendant nodes of a given node.
 
-The equality of nodes are defined as eql? and hash.
+The equality of nodes are defined by eql? and hash.
 TSort uses Hash internally.
 
 === methods
@@ -200,3 +200,26 @@ class Array
   alias tsort_each_node each_index
   alias tsort_descendants fetch
 end
+
+if __FILE__ == $0
+  require 'runit/testcase'
+  require 'runit/cui/testrunner'
+
+  class TSortTest < RUNIT::TestCase
+    def test_dag
+      h = {1=>[2, 3], 2=>[3], 3=>[]}
+      assert_equal([3, 2, 1], h.tsort)
+      assert_equal([[3], [2], [1]], h.strongly_connected_components)
+    end
+
+    def test_cycle
+      h = {1=>[2], 2=>[3, 4], 3=>[2], 4=>[]}
+      assert_equal([[4], [2, 3], [1]],
+        h.strongly_connected_components.map {|nodes| nodes.sort})
+      assert_exception(TSort::Cyclic) { h.tsort }
+    end
+  end
+
+  RUNIT::CUI::TestRunner.run(TSortTest.suite)
+end
+
