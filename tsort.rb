@@ -1,6 +1,9 @@
 =begin
 = tsort.rb
 
+tsort.rb provides a module for topological sorting and
+strongly connected components.
+
 == Example
 
   {1=>[2, 3], 2=>[3], 3=>[], 4=>[]}.tsort
@@ -10,16 +13,19 @@
   #=> [[4], [2, 3], [1]]
 
 
-== TSort
+== TSort module
 TSort implements topological sorting using Tarjan's algorithm for
 strongly connected components.
 
-TSort is designed to be able to use with any classes which can be interpreted
-as graph.  TSort requires two methods to interpret a object as graph:
+TSort is designed to be able to use with any object which can be interpreted
+as a graph.  TSort requires two methods to interpret a object as a graph:
 tsort_each_node and tsort_decendants.
 
 tsort_each_node is used to iterate all nodes over a graph.
 tsort_decendants is used to find all decendant nodes of a given node.
+
+The equality of nodes are defined as eql? and hash.
+TSort uses Hash internaly.
 
 === methods
 --- tsort 
