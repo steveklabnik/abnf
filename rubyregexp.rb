@@ -18,11 +18,8 @@ class RubyRegexp
   end
 
   def pretty_print(pp)
-    pp.group(1, '#<RubyRegexp:', '>') {
-      pp.breakable
-      pp.group(3, '%r{', '}x') {
-	pretty_format(pp)
-      }
+    pp.group(3, '%r{', '}x') {
+      pretty_format(pp)
     }
   end
 
