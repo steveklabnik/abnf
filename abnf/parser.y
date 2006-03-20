@@ -79,7 +79,7 @@ class ABNF
 	when /\A;/
 	  t = line
 	when /\A[A-Za-z][A-Za-z0-9\-_]*/ # _ is not permitted by ABNF
-	  yield :name, (t = $&).intern
+	  yield :name, (t = $&).downcase.intern
 	when /\A=\/?/
 	  yield :assign, (t = $&) # | is not permitted by ABNF
 	when /\A[\/|]/
