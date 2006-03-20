@@ -131,4 +131,6 @@ class ABNF
     return unless @rules.include? name
     @rules.fetch(name).each_var {|n| yield n}
   end
+
+  class ABNFError < StandardError; end
 end

@@ -39,6 +39,9 @@ class ABNF
 	rs = {}
 	ns.reverse_each {|n|
 	  e = rules[n]
+          if !e
+            raise ABNFError.new("no rule defined: #{n}")
+          end
 	  rs[n] = e.recursion(ns, n)
 	  if rs[n] & OtherRecursion != 0
 	    raise TooComplex.new("too complex to convert to regexp: #{n} (#{ns.join(', ')})")
