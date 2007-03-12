@@ -151,10 +151,10 @@ Ruby's
 == Download
 
 : with HTTP to get (relatively) stable tarball:
-  [http://cvs.m17n.org/cgi-bin/viewcvs/abnf/abnf-0.4.tar.gz?tarball=1&only_with_tag=abnf-0_4&cvsroot=ruby abnf-0.4.tar.gz]
+  [http://cvs.m17n.org/viewcvs/ruby/abnf.tar.gz?only_with_tag=abnf-0_4&view=tar abnf-0.4.tar.gz]
 
 : with HTTP to get latest tarball:
-  [http://cvs.m17n.org/cgi-bin/viewcvs/abnf/abnf-latest.tar.gz?tarball=1&cvsroot=ruby abnf-latest.tar.gz]
+  [http://cvs.m17n.org/viewcvs/ruby/abnf.tar.gz?view=tar abnf-latest.tar.gz]
 
 : with [http://www.cvshome.org/ CVS]:
     % cvs -d :pserver:anonymous@cvs.m17n.org:/cvs/ruby login
