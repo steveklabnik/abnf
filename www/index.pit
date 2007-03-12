@@ -165,7 +165,7 @@ Ruby's
   The cvs password can be any string.
 
 : with [http://viewcvs.sourceforge.net ViewCVS]:
-  [http://cvs.m17n.org/cgi-bin/viewcvs/abnf/?cvsroot=ruby click here to browse source code].
+  [http://cvs.m17n.org/viewcvs/ruby/abnf/ click here to browse source code].
 
 ---
 -- [http://cvs.m17n.org/~akr/ akr@m17n.org]
