@@ -48,8 +48,14 @@ class NatSet
   def NatSet.new(*es)
     r = self.empty
     es.each {|e|
+      if String === e
+        e = e.ord
+      end
       case e
       when Range
+        if String === e.begin
+          e = Range.new(e.begin.ord, e.end.ord, e.exclude_end?)
+        end
 	unless Integer === e.begin && 0 <= e.begin
 	  raise ArgumentError.new("bad value for #{self}.new: #{e}")
 	end
