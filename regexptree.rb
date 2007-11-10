@@ -378,7 +378,9 @@ class RegexpTree
       up = @natset & UpAlpha
       low = @natset & LowAlpha
       return false if up.es.length != low.es.length
-      up.es.map! {|ch| ch - ?A + ?a}
+      up.es.map! {|ch|
+        ch - 0x41 + 0x61 # ?A + ?a
+      }
       up == low
     end
 
@@ -388,7 +390,9 @@ class RegexpTree
 
     def downcase
       up = @natset & UpAlpha
-      up.es.map! {|ch| ch - ?A + ?a}
+      up.es.map! {|ch|
+        ch - 0x41 + 0x61 # ?A + ?a
+      }
       CharClass.new((@natset - UpAlpha) | up)
     end
 
@@ -434,14 +438,15 @@ class RegexpTree
 
     def encode_elt(e)
       case e
-      when ?\t; '\t'
-      when ?\n; '\n'
-      when ?\r; '\r'
-      when ?\f; '\f'
-      when ?\v; '\v'
-      when ?\a; '\a'
-      when ?\e; '\e'
-      when ?!, ?", ?%, ?&, ?', ?,, ?:, ?;, ?<, ?=, ?>, ?/, ?0..?9, ?@, ?A..?Z, ?_, ?`, ?a..?z, ?~
+      when 0x09; '\t'
+      when 0x0a; '\n'
+      when 0x0d; '\r'
+      when 0x0c; '\f'
+      when 0x0b; '\v'
+      when 0x07; '\a'
+      when 0x1b; '\e'
+      #when ?!, ?", ?%, ?&, ?', ?,, ?:, ?;, ?<, ?=, ?>, ?/, ?0..?9, ?@, ?A..?Z, ?_, ?`, ?a..?z, ?~
+      when 0x21, 0x22, 0x25, 0x26, 0x27, 0x2c, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x2f, 0x30..0x39, 0x40, 0x41..0x5a, 0x5f, 0x60, 0x61..0x7a, 0x7e
         sprintf("%c", e)
       else
         sprintf("\\x%02x", e)

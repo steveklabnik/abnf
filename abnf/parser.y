@@ -100,11 +100,11 @@ class ABNF
 	  es = []
 	  (t = $&)[1...-1].each_byte {|b|
 	    case b
-	    when ?A..?Z
-	      b2 = b - ?A + ?a
+	    when 0x41..0x5a # ?A..?Z
+	      b2 = b - 0x41 + 0x61 # ?A + ?a
 	      es << Term.new(NatSet.new(b, b2))
-	    when ?a..?z
-	      b2 = b - ?a + ?A
+	    when 0x61..0x7a # ?a..?z
+	      b2 = b - 0x61 + 0x41 # ?a + ?A
 	      es << Term.new(NatSet.new(b, b2))
 	    else
 	      es << Term.new(NatSet.new(b))
