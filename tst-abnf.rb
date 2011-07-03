@@ -78,4 +78,8 @@ class TestABNF < Test::Unit::TestCase
       s = "" | "a" s "b"
     End
   end
+
+  def test_case_insensitive_inspect
+    assert_equal("%r/a/", ABNF.regexp_tree("A = %d97").inspect)
+  end
 end

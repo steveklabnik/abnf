@@ -83,7 +83,7 @@ class RegexpTree
   end
 
   def inspect
-    case_insensitive = case_insensitive? && "i"
+    case_insensitive = case_insensitive? ? "i" : ""
     r = PrettyPrint.singleline_format('') {|out|
 	  (case_insensitive ? self.downcase : self).pretty_format(out)
 	}
