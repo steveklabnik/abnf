@@ -1,7 +1,4 @@
 require 'regexptree'
-require 'test/unit'
-
-require 'pp'
 
 class TestRegexpTree < Test::Unit::TestCase
   def test_whitespace

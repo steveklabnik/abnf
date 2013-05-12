@@ -1,7 +1,4 @@
 require 'abnf'
-require 'test/unit'
-
-require 'pp'
 
 class TestABNF < Test::Unit::TestCase
   def test_non_recursion_1
