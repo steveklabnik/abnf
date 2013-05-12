@@ -41,7 +41,7 @@ Also note that the example works well without installing the library after make.
   require 'abnf'
 
   # URI-reference [RFC2396]
-  uri_ref = <<- End
+  uri_ref = <<-End
         URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
         absoluteURI   = scheme ":" ( hier_part | opaque_part )
         relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
@@ -148,7 +148,7 @@ The result is follows:
 Following example contains right-recursion:
 
 ```ruby
-  decimal = <<- End
+  decimal = <<-End
     s0 = n0 s0 / n1 s2 / n2 s1 / ""
     s1 = n0 s1 / n1 s0 / n2 s2
     s2 = n0 s2 / n1 s1 / n2 s0
@@ -173,7 +173,7 @@ which are multiples of 3 and the result is follows:
 A converted regexp can be used to match in place as:
 
 ```ruby
-  ipv6 = <<- End
+  ipv6 = <<-End
     IPv6address = "::"                  /
           7( hex4 ":" )          hex4   /
         1*8( hex4 ":" )      ":"        /
