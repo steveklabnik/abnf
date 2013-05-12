@@ -1,5 +1,7 @@
 # Abnf
 
+[![Build Status](https://travis-ci.org/steveklabnik/abnf.png?branch=master)](https://travis-ci.org/steveklabnik/abnf) [![Code Climate](https://codeclimate.com/github/steveklabnik/abnf.png)](https://codeclimate.com/github/steveklabnik/abnf)
+
 This is a library to convert ABNF (Augmented Backus-Naur Form) to Regexp
 (Regular Expression) written in Ruby.  It parses a description according to
 ABNF defined by RFC2234 and some variants.  Then the parsed grammar is
