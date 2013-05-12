@@ -36,6 +36,7 @@ Regexp.
 Note that URI-reference has no recursion.
 Also note that the example works well without installing the library after make.
 
+```ruby
   require 'pp'
   require 'abnf'
 
@@ -56,8 +57,11 @@ Also note that the example works well without installing the library after make.
         digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
                    "8" | "9"
   End
+```
 
 The result is follows:
+
+```ruby
   %r{(?:[a-z][\x2b\x2d\x2e0-9a-z]*:
         (?:(?://
               (?:(?:(?:(?:[!'-\x2a\x2d\x2e0-9_a-z~]|
@@ -137,10 +141,11 @@ The result is follows:
                        [\x24&\x2b,:=@])*)*)*)?)
         (?:\x3f(?:[!\x24&-;=\x3f@_a-z~]|%[0-9a-f][0-9a-f])*)?)?
      (?:\x23(?:[!\x24&-;=\x3f@_a-z~]|%[0-9a-f][0-9a-f])*)?}xi
-
+```
 
 Following example contains right-recursion:
 
+```ruby
   pp ABNF.regexp_tree(<<'End')
     s0 = n0 s0 / n1 s2 / n2 s1 / ""
     s1 = n0 s1 / n1 s0 / n2 s2
@@ -149,18 +154,22 @@ Following example contains right-recursion:
     n1 = "1" / "4" / "7"
     n2 = "2" / "5" / "8"
   End
+```
 
 The above ABNF description represents decimal numbers
 which are multiples of 3 and the result is follows:
 
+```ruby
   %r{(?:[0369]|
         [147](?:[0369]|[147][0369]*[258])*(?:[147][0369]*[147]|[258])|
         [258][0369]*
         (?:[147]|
            [258](?:[0369]|[147][0369]*[258])*(?:[147][0369]*[147]|[258])))*}xi
+```
 
 A converted regexp can be used to match in place as:
 
+```ruby
   p /\A#{ABNF.regexp <<'End'}\z/o =~ "::13.1.68.3"
     IPv6address = "::"                  /
           7( hex4 ":" )          hex4   /
@@ -184,6 +193,7 @@ A converted regexp can be used to match in place as:
     IPv4address = 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT
     hex4    = 1*4HEXDIG
   End
+```
 
 ## Contributing
 
