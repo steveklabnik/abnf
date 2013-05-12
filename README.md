@@ -41,7 +41,7 @@ Also note that the example works well without installing the library after make.
   require 'abnf'
 
   # URI-reference [RFC2396]
-  pp ABNF.regexp_tree(<<-'End')
+  uri_ref = <<- End
         URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
         absoluteURI   = scheme ":" ( hier_part | opaque_part )
         relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
@@ -57,6 +57,8 @@ Also note that the example works well without installing the library after make.
         digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
                    "8" | "9"
   End
+
+  pp ABNF.regexp_tree(uri_ref)
 ```
 
 The result is follows:
@@ -146,7 +148,7 @@ The result is follows:
 Following example contains right-recursion:
 
 ```ruby
-  pp ABNF.regexp_tree(<<'End')
+  decimal = <<- End
     s0 = n0 s0 / n1 s2 / n2 s1 / ""
     s1 = n0 s1 / n1 s0 / n2 s2
     s2 = n0 s2 / n1 s1 / n2 s0
@@ -154,6 +156,7 @@ Following example contains right-recursion:
     n1 = "1" / "4" / "7"
     n2 = "2" / "5" / "8"
   End
+  pp ABNF.regexp_tree(decimal)
 ```
 
 The above ABNF description represents decimal numbers
@@ -170,7 +173,7 @@ which are multiples of 3 and the result is follows:
 A converted regexp can be used to match in place as:
 
 ```ruby
-  p /\A#{ABNF.regexp <<'End'}\z/o =~ "::13.1.68.3"
+  ipv6 = <<- End
     IPv6address = "::"                  /
           7( hex4 ":" )          hex4   /
         1*8( hex4 ":" )      ":"        /
@@ -193,6 +196,7 @@ A converted regexp can be used to match in place as:
     IPv4address = 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT
     hex4    = 1*4HEXDIG
   End
+  p /\A#{ABNF.regexp(ipv6)}\z/o =~ "::13.1.68.3"
 ```
 
 ## Contributing
