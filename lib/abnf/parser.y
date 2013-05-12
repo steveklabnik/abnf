@@ -57,16 +57,16 @@ class ABNF
 
   def scan
     prev = nil
-    scan1 {|toktype, tokval|
+    scan1 do |toktype, tokval|
       if prev
-	if prev[0] == :name && toktype == :assign
-	  yield :defname, prev[1]
-	else
-	  yield prev
-	end
+        if prev[0] == :name && toktype == :assign
+          yield [:defname, prev[1]]
+        else
+          yield prev
+        end
       end
       prev = [toktype, tokval]
-    }
+    end
     yield prev
   end
 
