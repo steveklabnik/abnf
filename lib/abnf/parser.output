@@ -1,0 +1,348 @@
+
+
+-------- Grammar --------
+
+rule 1 rulelist: 
+rule 2 rulelist: rulelist rule
+rule 3 rule: defname assign alt
+rule 4 alt: seq
+rule 5 alt: alt altop seq
+rule 6 seq: rep
+rule 7 seq: seq rep
+rule 8 rep: element
+rule 9 rep: repeat element
+rule 10 repeat: repop
+rule 11 repeat: repop int
+rule 12 repeat: int
+rule 13 repeat: int repop
+rule 14 repeat: int repop int
+rule 15 element: name
+rule 16 element: lparen alt rparen
+rule 17 element: lbracket alt rbracket
+rule 18 element: val
+
+------- Symbols -------
+
+**Nonterminals, with rules where they appear
+
+  $start (13)
+    on right: 
+    on left : 
+  rulelist (14)
+    on right: 2
+    on left : 1 2
+  rule (15)
+    on right: 2
+    on left : 3
+  alt (16)
+    on right: 3 5 16 17
+    on left : 4 5
+  seq (17)
+    on right: 4 5 7
+    on left : 6 7
+  rep (18)
+    on right: 6 7
+    on left : 8 9
+  element (19)
+    on right: 8 9
+    on left : 15 16 17 18
+  repeat (20)
+    on right: 9
+    on left : 10 11 12 13 14
+
+**Terminals, with rules where they appear
+
+  $end (0) 
+  error (1) 
+  defname (2) 3
+  assign (3) 3
+  altop (4) 5
+  repop (5) 10 11 13 14
+  int (6) 11 12 13 14
+  name (7) 15
+  lparen (8) 16
+  rparen (9) 16
+  lbracket (10) 17
+  rbracket (11) 17
+  val (12) 18
+
+--------- State ---------
+
+state 0
+
+
+  $default      reduce using rule 1 (rulelist)
+
+  rulelist      go to state 1
+
+state 1
+
+   2) rulelist : rulelist _ rule
+
+  $end          shift, and go to state 2
+  defname       shift, and go to state 4
+
+  rule          go to state 3
+
+state 2
+
+
+  $end          shift, and go to state 5
+
+
+state 3
+
+   2) rulelist : rulelist rule _
+
+  $default      reduce using rule 2 (rulelist)
+
+
+state 4
+
+   3) rule : defname _ assign alt
+
+  assign        shift, and go to state 6
+
+
+state 5
+
+
+  $default      accept
+
+
+state 6
+
+   3) rule : defname assign _ alt
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+
+  alt           go to state 7
+  seq           go to state 8
+  rep           go to state 9
+  element       go to state 10
+  repeat        go to state 11
+
+state 7
+
+   3) rule : defname assign alt _
+   5) alt : alt _ altop seq
+
+  altop         shift, and go to state 18
+  $default      reduce using rule 3 (rule)
+
+
+state 8
+
+   4) alt : seq _
+   7) seq : seq _ rep
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+  $default      reduce using rule 4 (alt)
+
+  rep           go to state 19
+  element       go to state 10
+  repeat        go to state 11
+
+state 9
+
+   6) seq : rep _
+
+  $default      reduce using rule 6 (seq)
+
+
+state 10
+
+   8) rep : element _
+
+  $default      reduce using rule 8 (rep)
+
+
+state 11
+
+   9) rep : repeat _ element
+
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+
+  element       go to state 20
+
+state 12
+
+  10) repeat : repop _
+  11) repeat : repop _ int
+
+  int           shift, and go to state 21
+  $default      reduce using rule 10 (repeat)
+
+
+state 13
+
+  12) repeat : int _
+  13) repeat : int _ repop
+  14) repeat : int _ repop int
+
+  repop         shift, and go to state 22
+  $default      reduce using rule 12 (repeat)
+
+
+state 14
+
+  15) element : name _
+
+  $default      reduce using rule 15 (element)
+
+
+state 15
+
+  16) element : lparen _ alt rparen
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+
+  seq           go to state 8
+  alt           go to state 23
+  rep           go to state 9
+  element       go to state 10
+  repeat        go to state 11
+
+state 16
+
+  17) element : lbracket _ alt rbracket
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+
+  seq           go to state 8
+  alt           go to state 24
+  rep           go to state 9
+  element       go to state 10
+  repeat        go to state 11
+
+state 17
+
+  18) element : val _
+
+  $default      reduce using rule 18 (element)
+
+
+state 18
+
+   5) alt : alt altop _ seq
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+
+  seq           go to state 25
+  rep           go to state 9
+  element       go to state 10
+  repeat        go to state 11
+
+state 19
+
+   7) seq : seq rep _
+
+  $default      reduce using rule 7 (seq)
+
+
+state 20
+
+   9) rep : repeat element _
+
+  $default      reduce using rule 9 (rep)
+
+
+state 21
+
+  11) repeat : repop int _
+
+  $default      reduce using rule 11 (repeat)
+
+
+state 22
+
+  13) repeat : int repop _
+  14) repeat : int repop _ int
+
+  int           shift, and go to state 26
+  $default      reduce using rule 13 (repeat)
+
+
+state 23
+
+   5) alt : alt _ altop seq
+  16) element : lparen alt _ rparen
+
+  altop         shift, and go to state 18
+  rparen        shift, and go to state 27
+
+
+state 24
+
+   5) alt : alt _ altop seq
+  17) element : lbracket alt _ rbracket
+
+  altop         shift, and go to state 18
+  rbracket      shift, and go to state 28
+
+
+state 25
+
+   5) alt : alt altop seq _
+   7) seq : seq _ rep
+
+  repop         shift, and go to state 12
+  int           shift, and go to state 13
+  name          shift, and go to state 14
+  lparen        shift, and go to state 15
+  lbracket      shift, and go to state 16
+  val           shift, and go to state 17
+  $default      reduce using rule 5 (alt)
+
+  rep           go to state 19
+  element       go to state 10
+  repeat        go to state 11
+
+state 26
+
+  14) repeat : int repop int _
+
+  $default      reduce using rule 14 (repeat)
+
+
+state 27
+
+  16) element : lparen alt rparen _
+
+  $default      reduce using rule 16 (element)
+
+
+state 28
+
+  17) element : lbracket alt rbracket _
+
+  $default      reduce using rule 17 (element)
+

@@ -1,11 +1,12 @@
 require "bundler/gem_tasks"
 
-file "abnf/parser.rb" => ["abnf/parser.y"] do |t|
-  sh "racc -E -o abnf/parser.rb -v abnf/parser.y"
+file "lib/abnf/parser.rb" => ["lib/abnf/parser.y"] do |t|
+  sh "racc -E -o lib/abnf/parser.rb -v lib/abnf/parser.y"
 end
 
-require 'rake/testtask'
+task :build_parser => ["lib/abnf/parser.rb"]
 
+require 'rake/testtask'
 
 Rake::TestTask.new do |t|
   t.libs << "lib"
@@ -14,4 +15,4 @@ Rake::TestTask.new do |t|
   t.verbose = true
 end
 
-task :default => :test
+task :default => [:build_parser, :test]

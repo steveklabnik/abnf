@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Abnf::VERSION
   spec.authors       = ["Steve Klabnik"]
   spec.email         = ["steve@steveklabnik.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.description   = %q{An Augmented Backus Naur form parser in Ruby.}
+  spec.summary       = %q{An Augmented Backus Naur form parser in Ruby.}
+  spec.homepage      = "https://github.com/steveklabnik/abnf"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
